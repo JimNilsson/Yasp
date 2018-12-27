@@ -14,7 +14,8 @@ namespace yasp
 		RenderContext(void* windowHandle);
 		~RenderContext();
 
-
+		void Clear();
+		void Display();
 	};
 };
 

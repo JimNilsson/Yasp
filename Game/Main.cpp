@@ -18,6 +18,8 @@ int main(int argc, char** argv)
 		{
 			std::cout << "B was dtapped\n";
 		}
+		renderContext.Clear();
+		renderContext.Display();
 	}
 	return 0;
 }

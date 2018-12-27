@@ -15,3 +15,13 @@ yasp::RenderContext::~RenderContext()
 {
 	delete renderContext;
 }
+
+void yasp::RenderContext::Clear()
+{
+	renderContext->Clear();
+}
+
+void yasp::RenderContext::Display()
+{
+	renderContext->Display();
+}

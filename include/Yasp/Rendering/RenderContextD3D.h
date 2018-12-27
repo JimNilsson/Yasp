@@ -12,13 +12,19 @@ namespace yasp
 	public:
 		RenderContextD3D(void* windowHandle);
 		~RenderContextD3D();
+
+		void Clear() override final;
+		void Display() override final;
 	private:
 		HWND windowHandle;
 		ID3D11Device * device;
 		ID3D11DeviceContext* deviceContext;
 		IDXGISwapChain* swapChain;
+		ID3D11DepthStencilView* backbufferDSV;
+		ID3D11RenderTargetView* backbufferRTV;
 
 		void CreateSwapChain();
+		void CreateBackBuffer();
 
 	};
 };
