@@ -19,6 +19,7 @@ typedef uint64_t uint64;
 	#define NOMINMAX
 	#define YASP_API_EXPORT __declspec(dllexport)
 	#define YASP_API_IMPORT __declspec(dllimport)
+	#define YASP_RENDERER_D3D
 #endif
 
 #define NOMOVORCOPY(type) \
