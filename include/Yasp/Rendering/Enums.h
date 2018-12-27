@@ -5,7 +5,7 @@
 
 namespace yasp
 {
-	enum Usage : int32
+	enum class Usage : int32
 	{
 		GPU_READ_WRITE,
 		GPU_READ,
@@ -13,7 +13,7 @@ namespace yasp
 		CPU_READ_WRITE
 	};
 
-	enum BufferType : int32
+	enum class BufferType : int32
 	{
 		VERTEX_BUFFER,
 		INDEX_BUFFER,
@@ -25,7 +25,7 @@ namespace yasp
 		COMPUTE_ACCESS
 	};
 	
-	enum Topology : int32
+	enum class Topology : int32
 	{
 		LINE_LIST,
 		LINE_STRIP,
@@ -33,7 +33,7 @@ namespace yasp
 		TRIANGLE_STRIP
 	};
 
-	enum TextureBinding : int32
+	enum class TextureBinding : int32
 	{
 		SHADER_INPUT = 1 << 0,
 		STREAM_OUT = 1 << 1,
@@ -41,14 +41,14 @@ namespace yasp
 		DEPTH_BUFFER = 1 << 3
 	};
 
-	enum Texture2DFormat : int32
+	enum class Texture2DFormat : int32
 	{
 		R32G32B32A32,
 		R24G8,
 		R8G8B8A8
 	};
 
-	enum TextureFilter : int32
+	enum class TextureFilter : int32
 	{
 		POINT,
 		BILINEAR,
@@ -60,7 +60,7 @@ namespace yasp
 		ANISOTROPIC_16
 	};
 
-	enum TextureWrapping : int32
+	enum class TextureWrapping : int32
 	{
 		CLAMP,
 		REPEAT,
@@ -68,7 +68,7 @@ namespace yasp
 		BORDER
 	};
 
-	enum BlendOp : int32
+	enum class BlendOp : int32
 	{
 		ADD,
 		SUBTRACT,
@@ -76,7 +76,7 @@ namespace yasp
 		MAX
 	};
 
-	enum BlendFactor : int32
+	enum class BlendFactor : int32
 	{
 		ZERO,
 		ONE,
@@ -90,20 +90,20 @@ namespace yasp
 		INV_DEST_ALPHA
 	};
 
-	enum CullMode : int32
+	enum class CullMode : int32
 	{
 		BACK,
 		FRONT,
 		NONE
 	};
 
-	enum WindingOrder : int32
+	enum class WindingOrder : int32
 	{
 		CLOCKWISE,
 		COUNTERCLOCKWISE
 	};
 
-	enum FillMode : int32
+	enum class FillMode : int32
 	{
 		WIREFRAME,
 		SOLID

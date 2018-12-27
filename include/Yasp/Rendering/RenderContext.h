@@ -3,6 +3,8 @@
 
 #include <Yasp/Config.h>
 #include <Yasp/Rendering/IRenderContext.h>
+#include <Yasp/Rendering/Descriptions.h>
+
 
 namespace yasp
 {
