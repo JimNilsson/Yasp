@@ -7,6 +7,7 @@ int main(int argc, char** argv)
 {
 	yasp::Window window(640, 480);
 	yasp::RenderContext renderContext(window.GetWindowHandle());
+	
 	while (window.IsOpen())
 	{
 		window.PollEvents();

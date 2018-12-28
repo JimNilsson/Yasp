@@ -2,6 +2,8 @@
 #define I_RENDER_CONTEXT_H
 
 #include <Yasp/Config.h>
+#include <Yasp/Rendering/Buffer.h>
+#include <Yasp/Rendering/Descriptions.h>
 
 namespace yasp
 {
@@ -15,7 +17,6 @@ namespace yasp
 
 		virtual void Clear() = 0;
 		virtual void Display() = 0;
-
 	};
 };
 #endif

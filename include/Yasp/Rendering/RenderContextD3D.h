@@ -3,6 +3,8 @@
 
 #include <Yasp/Config.h>
 #include <Yasp/Rendering/IRenderContext.h>
+#include <Yasp/Rendering/BufferD3D.h>
+#include <Yasp/Rendering/Descriptions.h>
 #include <d3d11.h>
 
 namespace yasp
@@ -12,6 +14,9 @@ namespace yasp
 	public:
 		RenderContextD3D(void* windowHandle);
 		~RenderContextD3D();
+
+		ID3D11Device* Device() { return device; }
+		ID3D11DeviceContext* DeviceContext() { return deviceContext; }
 
 		void Clear() override final;
 		void Display() override final;

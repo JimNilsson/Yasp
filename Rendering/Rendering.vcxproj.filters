@@ -19,6 +19,9 @@
     <Filter Include="Source Files\D3D">
       <UniqueIdentifier>{59c40231-6057-4e62-a61e-24841324ff2c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Interfaces">
+      <UniqueIdentifier>{a2433417-772f-443d-ad4f-1d404c9995af}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\Rendering\RenderContextD3D.cpp">
@@ -27,11 +30,11 @@
     <ClCompile Include="..\src\Rendering\RenderContext.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\include\Yasp\Rendering\GPUResourceManagerD3D.cpp">
+      <Filter>Source Files\D3D</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\Yasp\Rendering\IRenderContext.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\Yasp\Rendering\Enums.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -43,6 +46,18 @@
     </ClInclude>
     <ClInclude Include="..\include\Yasp\Rendering\RenderContext.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Yasp\Rendering\IRenderContext.h">
+      <Filter>Header Files\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Yasp\Rendering\GPUResourceID.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Yasp\Rendering\IGPUResourceManager.h">
+      <Filter>Header Files\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Yasp\Rendering\GPUResourceManagerD3D.h">
+      <Filter>Header Files\D3D</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
