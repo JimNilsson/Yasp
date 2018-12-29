@@ -151,6 +151,6 @@ void yasp::RenderContextD3D::CreateBackBuffer()
 	hr = device->CreateDepthStencilView(depthTex, &dsvd, &backbufferDSV);
 	assert(SUCCEEDED(hr));
 	depthTex->Release();
-
 	deviceContext->OMSetRenderTargets(1, &backbufferRTV, backbufferDSV);
+
 }

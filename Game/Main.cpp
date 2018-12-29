@@ -18,44 +18,52 @@ int main(int argc, char** argv)
 	bd.size = 16 * sizeof(float);
 	bd.usage = yasp::Usage::GPU_READ_CPU_WRITE;
 	
-	auto view = yasp::mat4::LookToLH({ 0.0f, 0.0f, -2.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f });
+	auto view = yasp::mat4::LookToLH({ 0.0f, 0.0f, -5.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f });
 	auto projection = yasp::mat4::PerspectiveLH(yasp::PI<float> / 4, 640.0f / 480.0f, 0.1f, 10.0f);
 	yasp::mat4 matrix = ~(view * projection);
 
 	
-	auto resID = renderContext.ResourceManager()->CreateBuffer(bd, &matrix);
-	{
-		auto resCopy = resID;
-		auto resCopy2 = resID;
-		auto resCopy3 = resID;
-	}
+	auto wvpBuffer = renderContext.ResourceManager()->CreateBuffer(bd, &matrix);
 	auto pipe = renderContext.ResourceManager();
 	auto vshader = pipe->CreateVertexShader("SimpleVS.hlsl");
 	auto pshader = pipe->CreatePixelShader("SimplePS.hlsl");
+	auto rasterizer = pipe->CreateRasterizer({
+		yasp::FillMode::SOLID,
+		yasp::CullMode::NONE,
+		yasp::WindingOrder::CLOCKWISE
+	});
 
+	
 	pipe->SetVertexShader(vshader);
 	pipe->SetPixelShader(pshader);
+	pipe->SetRasterizer(rasterizer);
 
-	struct Vertex
-	{
-		yasp::vec3<float> pos;
-	};
-
-	Vertex vertices[] = {
-		yasp::vec3<float>(0.0f, 0.0f, 0.0f),
-		yasp::vec3<float>(-0.5f, 0.0f, 0.0f),
-		yasp::vec3<float>(0.0f, 0.5f, 0.0f)
+	yasp::float3 positions[14] = {
+		yasp::float3(-1.0f, -1.0f, -1.0f),
+		yasp::float3(1.0f, -1.0f, -1.0f),
+		yasp::float3(1.0f, -1.0f,  1.0f),
+		yasp::float3(1.0f,  1.0f, -1.0f),
+		yasp::float3(1.0f,  1.0f,  1.0f),
+		yasp::float3(-1.0f,  1.0f,  1.0f),
+		yasp::float3(1.0f, -1.0f,  1.0f),
+		yasp::float3(-1.0f, -1.0f,  1.0f),
+		yasp::float3(-1.0f, -1.0f, -1.0f),
+		yasp::float3(-1.0f,  1.0f,  1.0f),
+		yasp::float3(-1.0f,  1.0f, -1.0f),
+		yasp::float3(1.0f,  1.0f, -1.0f),
+		yasp::float3(-1.0f, -1.0f, -1.0f),
+		yasp::float3(1.0f, -1.0f, -1.0f)
 	};
 
 	bd.bind = yasp::BIND_VERTEX_BUFFER;
-	bd.size = 3 * sizeof(Vertex);
+	bd.size = 14 * sizeof(yasp::float3);
 	bd.usage = yasp::Usage::GPU_READ_WRITE;
 	bd.byteStride = 0;
 	
-	auto vbuffer = pipe->CreateBuffer(bd, vertices);
+	auto vbuffer = pipe->CreateBuffer(bd, positions);
 
-	pipe->SetVertexBuffer(vbuffer, sizeof(Vertex), 0);
-	pipe->SetVertexShaderBuffer(resID, 0);
+	pipe->SetVertexBuffer(vbuffer, sizeof(yasp::float3), 0);
+	pipe->SetShaderBuffers(yasp::Shader::VERTEX, &wvpBuffer, 0, 1);
 	renderContext.SetTopology(yasp::Topology::TRIANGLE_STRIP);
 	renderContext.SetViewport({
 		0.0f,
@@ -74,7 +82,7 @@ int main(int argc, char** argv)
 		rot += 2 * yasp::PI<float> * dt;
 		auto rmat = yasp::mat4::RotationY(rot);
 		auto newmat = ~(rmat * view * projection);
-		pipe->UpdateBuffer(resID, &newmat, sizeof(newmat));
+		pipe->UpdateBuffer(wvpBuffer, &newmat, sizeof(newmat));
 		window.PollEvents();
 		if (yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::A))
 		{
@@ -86,7 +94,7 @@ int main(int argc, char** argv)
 		}
 
 		renderContext.Clear();
-		renderContext.Draw(3, 0);
+		renderContext.Draw(14, 0);
 		renderContext.Display();
 	}
 	return 0;

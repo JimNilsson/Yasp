@@ -5,5 +5,5 @@ struct VS_OUT
 
 float4 main( VS_OUT input ) : SV_TARGET
 {
-	return float4(1.0f,1.0f,1.0f,1.0f);
+	return float4(normalize(input.pos.xyz), 1.0f);
 }

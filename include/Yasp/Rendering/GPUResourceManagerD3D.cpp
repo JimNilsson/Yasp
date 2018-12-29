@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <d3d11shader.h>
 #include <d3dcompiler.h>
+#include <vector>
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "dxguid.lib")
 
@@ -46,6 +47,9 @@ yasp::GPUResourceManagerD3D::~GPUResourceManagerD3D()
 			break;
 		case ResourceType::TEXTURE_VIEW:
 			r.second.shaderResourceView->Release();
+			break;
+		case ResourceType::RASTERIZER:
+			r.second.rasterizerState->Release();
 			break;
 		}
 		
@@ -144,6 +148,55 @@ yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreatePixelShader(const std::st
 	return id;
 }
 
+yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreateRasterizer(RasterizerDesc rasterizerDesc)
+{
+	ID3D11RasterizerState* rs;
+	D3D11_RASTERIZER_DESC rd;
+	switch (rasterizerDesc.cullMode)
+	{
+	case CullMode::BACK:
+		rd.CullMode = D3D11_CULL_BACK;
+		break;
+	case CullMode::FRONT:
+		rd.CullMode = D3D11_CULL_FRONT;
+		break;
+	case CullMode::NONE:
+		rd.CullMode = D3D11_CULL_NONE;
+		break;
+	}
+	switch (rasterizerDesc.fillMode)
+	{
+	case FillMode::SOLID:
+		rd.FillMode = D3D11_FILL_SOLID;
+		break;
+	case FillMode::WIREFRAME:
+		rd.FillMode = D3D11_FILL_WIREFRAME;
+		break;
+	}
+	switch (rasterizerDesc.windingOrder)
+	{
+	case WindingOrder::CLOCKWISE:
+		rd.FrontCounterClockwise = false;
+		break;
+	case WindingOrder::COUNTERCLOCKWISE:
+		rd.FrontCounterClockwise = true;
+		break;
+	}
+	rd.AntialiasedLineEnable = false;
+	rd.DepthBias = 0;
+	rd.DepthBiasClamp = 0;
+	rd.DepthClipEnable = true;
+	rd.MultisampleEnable = false;
+	rd.SlopeScaledDepthBias = 0;
+	rd.ScissorEnable = false;
+
+	HRESULT hr = device->CreateRasterizerState(&rd, &rs);
+	assert(SUCCEEDED(hr));
+	GPUResourceID id(resourceCounter++);
+	resourceMap[id] = { ResourceType::RASTERIZER, rs };
+	return id;
+}
+
 void yasp::GPUResourceManagerD3D::UpdateBuffer(GPUResourceID id, void * data, uint32 size)
 {
 	if (auto f = resourceMap.find(id); f != resourceMap.end())
@@ -155,7 +208,7 @@ void yasp::GPUResourceManagerD3D::UpdateBuffer(GPUResourceID id, void * data, ui
 	}
 }
 
-void yasp::GPUResourceManagerD3D::SetVertexBuffer(GPUResourceID id, uint32 stride, uint32 offset)
+void yasp::GPUResourceManagerD3D::SetVertexBuffer(const GPUResourceID& id, uint32 stride, uint32 offset)
 {
 	if (auto f = resourceMap.find(id); f != resourceMap.end())
 	{
@@ -163,15 +216,51 @@ void yasp::GPUResourceManagerD3D::SetVertexBuffer(GPUResourceID id, uint32 strid
 	}
 }
 
-void yasp::GPUResourceManagerD3D::SetVertexShaderBuffer(GPUResourceID id, uint32 slot)
+void yasp::GPUResourceManagerD3D::SetIndexBuffer(const GPUResourceID & id, IndexFormat format, uint32 offset)
 {
 	if (auto f = resourceMap.find(id); f != resourceMap.end())
 	{
-		deviceContext->VSSetConstantBuffers(slot, 1, &f->second.buffer);
+		deviceContext->IASetIndexBuffer(f->second.buffer, format == IndexFormat::UINT16 ? DXGI_FORMAT_R16_UINT : DXGI_FORMAT_R32_UINT, offset);
 	}
 }
 
-void yasp::GPUResourceManagerD3D::SetVertexShader(GPUResourceID id)
+void yasp::GPUResourceManagerD3D::SetShaderBuffers(Shader shader, GPUResourceID * buffers, uint32 startSlot, uint32 count)
+{
+	std::vector<ID3D11Buffer*> d3dBuffers(count,nullptr);
+	for (uint32 i = 0; i < count; i++)
+	{
+		if (auto f = resourceMap.find(buffers[i]); f != resourceMap.end())
+		{
+			d3dBuffers[i] = f->second.buffer;
+		}
+		else
+		{
+			d3dBuffers[i] = nullptr;
+		}
+	}
+
+	switch (shader)
+	{
+	case Shader::VERTEX:
+		deviceContext->VSSetConstantBuffers(startSlot, count, d3dBuffers.data());
+		break;
+	case Shader::GEOMETRY:
+		deviceContext->GSSetConstantBuffers(startSlot, count, d3dBuffers.data());
+		break;
+	case Shader::PIXEL:
+		deviceContext->PSSetConstantBuffers(startSlot, count, d3dBuffers.data());
+		break;
+	case Shader::COMPUTE:
+		deviceContext->CSSetConstantBuffers(startSlot, count, d3dBuffers.data());
+		break;
+	}
+}
+
+void yasp::GPUResourceManagerD3D::SetShaderTextureViews(Shader shader, GPUResourceID * textureViews, uint32 startSlot, uint32 count)
+{
+}
+
+void yasp::GPUResourceManagerD3D::SetVertexShader(const GPUResourceID& id)
 {
 	if (auto f = resourceMap.find(id); f != resourceMap.end())
 	{
@@ -183,12 +272,28 @@ void yasp::GPUResourceManagerD3D::SetVertexShader(GPUResourceID id)
 	}
 }
 
-void yasp::GPUResourceManagerD3D::SetPixelShader(GPUResourceID id)
+void yasp::GPUResourceManagerD3D::SetGeometryShader(const GPUResourceID & id)
+{
+}
+
+void yasp::GPUResourceManagerD3D::SetPixelShader(const GPUResourceID& id)
 {
 	if (auto f = resourceMap.find(id); f != resourceMap.end())
 	{
 		deviceContext->PSSetShader(f->second.pixelShader, nullptr, 0);
 	}
+}
+
+void yasp::GPUResourceManagerD3D::SetRasterizer(const GPUResourceID& id)
+{
+	if (auto f = resourceMap.find(id); f != resourceMap.end())
+	{
+		deviceContext->RSSetState(f->second.rasterizerState);
+	}
+}
+
+void yasp::GPUResourceManagerD3D::SetBlendState(const GPUResourceID & id, const float * blendFactor, uint32 mask)
+{
 }
 
 

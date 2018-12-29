@@ -16,6 +16,7 @@ namespace yasp
 		virtual GPUResourceID CreateBuffer(BufferDesc bufferDesc, void* initialData) = 0;
 		virtual GPUResourceID CreateVertexShader(const std::string& filename) = 0;
 		virtual GPUResourceID CreatePixelShader(const std::string& filename) = 0;
+		virtual GPUResourceID CreateRasterizer(RasterizerDesc rasterizerDesc) = 0;
 	/*	virtual GPUResourceID CreateTexture(TextureDesc textureDesc) = 0;
 		virtual GPUResourceID CreateTextureView(TextureViewDesc textureViewDesc, GPUResourceID texture) = 0;
 		virtual GPUResourceID CreateShader(ShaderDesc shaderDesc) = 0;
@@ -27,10 +28,15 @@ namespace yasp
 
 		virtual void UpdateBuffer(GPUResourceID id, void* data, uint32 size) = 0;
 
-		virtual void SetVertexBuffer(GPUResourceID id, uint32 stride, uint32 offset) = 0;
-		virtual void SetVertexShaderBuffer(GPUResourceID id, uint32 slot) = 0;
-		virtual void SetVertexShader(GPUResourceID id) = 0;
-		virtual void SetPixelShader(GPUResourceID id) = 0;
+		virtual void SetVertexBuffer(const GPUResourceID& id, uint32 stride, uint32 offset) = 0;
+		virtual void SetIndexBuffer(const GPUResourceID& id, IndexFormat format, uint32 offset) = 0;
+		virtual void SetShaderBuffers(Shader shader, GPUResourceID* buffers, uint32 startSlot, uint32 count) = 0;
+		virtual void SetShaderTextureViews(Shader shader, GPUResourceID* textureViews, uint32 startSlot, uint32 count) = 0;
+		virtual void SetVertexShader(const GPUResourceID& id) = 0;
+		virtual void SetGeometryShader(const GPUResourceID& id) = 0;
+		virtual void SetPixelShader(const GPUResourceID& id) = 0;
+		virtual void SetRasterizer(const GPUResourceID& id) = 0;
+		virtual void SetBlendState(const GPUResourceID& id, const float* blendFactor, uint32 mask) = 0;
 	};
 };
 

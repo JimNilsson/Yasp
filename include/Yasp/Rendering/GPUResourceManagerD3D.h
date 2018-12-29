@@ -18,13 +18,20 @@ namespace yasp
 		GPUResourceID CreateBuffer(BufferDesc bufferDesc, void* initialData) override final;
 		GPUResourceID CreateVertexShader(const std::string& filename) override final;
 		GPUResourceID CreatePixelShader(const std::string& filename) override final;
+		GPUResourceID CreateRasterizer(RasterizerDesc rasterizerDesc) override final;
 
 		void UpdateBuffer(GPUResourceID id, void* data, uint32 size) override final;
 
-		void SetVertexBuffer(GPUResourceID id, uint32 stride, uint32 offset);
-		void SetVertexShaderBuffer(GPUResourceID id, uint32 slot);
-		void SetVertexShader(GPUResourceID id);
-		void SetPixelShader(GPUResourceID id);
+		void SetVertexBuffer(const GPUResourceID& id, uint32 stride, uint32 offset) override final;
+		void SetIndexBuffer(const GPUResourceID& id, IndexFormat format, uint32 offset) override final;
+		void SetShaderBuffers(Shader shader, GPUResourceID* buffers, uint32 startSlot, uint32 count) override final;
+		void SetShaderTextureViews(Shader shader, GPUResourceID* textureViews, uint32 startSlot, uint32 count) override final;
+		void SetVertexShader(const GPUResourceID& id) override final;
+		void SetGeometryShader(const GPUResourceID& id) override final;
+		void SetPixelShader(const GPUResourceID& id) override final;
+		void SetRasterizer(const GPUResourceID& id) override final;
+		void SetBlendState(const GPUResourceID& id, const float* blendFactor, uint32 mask) override final;
+
 
 	private:
 		void VertexShaderReflection(ID3DBlob* shaderByteCode);
