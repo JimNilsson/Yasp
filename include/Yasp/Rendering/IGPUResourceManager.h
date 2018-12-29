@@ -4,6 +4,7 @@
 #include <Yasp/Config.h>
 #include <Yasp/Rendering/GPUResourceID.h>
 #include <Yasp/Rendering/Descriptions.h>
+#include <string>
 
 namespace yasp
 {
@@ -13,6 +14,7 @@ namespace yasp
 		IGPUResourceManager() {};
 		virtual ~IGPUResourceManager() = 0 {};
 		virtual GPUResourceID CreateBuffer(BufferDesc bufferDesc, void* initialData) = 0;
+		virtual GPUResourceID CreateVertexShader(const std::string& filename) = 0;
 	/*	virtual GPUResourceID CreateTexture(TextureDesc textureDesc) = 0;
 		virtual GPUResourceID CreateTextureView(TextureViewDesc textureViewDesc, GPUResourceID texture) = 0;
 		virtual GPUResourceID CreateShader(ShaderDesc shaderDesc) = 0;

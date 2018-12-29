@@ -8,12 +8,45 @@ namespace yasp
 	class GPUResourceID
 	{
 	private:
-		int32 uid;
-		
+		uint32 uid;
+		int32* refCount;
 	public:
-		GPUResourceID(int32 uid) : uid(uid) {}
+		GPUResourceID(uint32 uid) : uid(uid) 
+		{
+			refCount = new int32(1);
+		}
 		operator int32() { return uid; }
-		~GPUResourceID() {};
+		~GPUResourceID()
+		{
+			(*refCount)--;
+			if (refCount <= 0)
+				delete refCount;
+		};
+		GPUResourceID(const GPUResourceID& other)
+		{
+			this->uid = other.uid;
+			this->refCount = other.refCount;
+			(*refCount)++;
+		}
+		GPUResourceID& operator=(const GPUResourceID& other)
+		{
+			if (this == &other)
+				return *this;
+			(*refCount)--;
+			if (refCount <= 0)
+				delete refCount;
+			this->uid = other.uid;
+			this->refCount = other.refCount;
+			(*refCount)++;
+			return *this;
+		}
+		
+		bool operator==(const GPUResourceID& rhs) const { return rhs.uid == this->uid; }
+
+		struct Hasher
+		{
+			uint32 operator()(const GPUResourceID& id) const { return id.uid; }
+		};
 
 	};
 };

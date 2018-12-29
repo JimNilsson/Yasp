@@ -18,7 +18,8 @@ namespace yasp
 	public:
 		RenderContext(void* windowHandle);
 		~RenderContext();
-
+		
+		IGPUResourceManager* ResourceManager() { return gpuResourceManager; }
 		void Clear();
 		void Display();
 

@@ -16,16 +16,36 @@ namespace yasp
 		~GPUResourceManagerD3D();
 
 		GPUResourceID CreateBuffer(BufferDesc bufferDesc, void* initialData) override final;
-
+		GPUResourceID CreateVertexShader(const std::string& filename) override final;
+	private:
+		void ShaderReflection(ID3DBlob* shaderByteCode);
 	private:
 		ID3D11Device* device;
 		ID3D11DeviceContext* deviceContext;
 		struct GPUResourceD3D
 		{
-			ID3D11Resource* resource;
+			ResourceType type;
+			union
+			{
+				void* ptr;
+				ID3D11Buffer* buffer;
+				ID3D11VertexShader* vertexShader;
+				ID3D11GeometryShader* geometryShader;
+				ID3D11PixelShader* pixelShader;
+				ID3D11ComputeShader* computeShader;
+				ID3D11Texture2D* texture;
+				ID3D11ShaderResourceView* shaderResourceView;
+				ID3D11RenderTargetView* renderTargetView;
+				ID3D11DepthStencilView* depthStencilView;
+				ID3D11DepthStencilState* depthStencilState;
+				ID3D11RasterizerState* rasterizerState;
+				ID3D11BlendState* blendState;
+				ID3D11InputLayout* inputLayout;
+			};
+			
 		};
 		uint32 resourceCounter;
-		std::unordered_map<int32, GPUResourceD3D> resourceMap;
+		std::unordered_map<GPUResourceID, GPUResourceD3D, GPUResourceID::Hasher> resourceMap;
 	};
 };
 
