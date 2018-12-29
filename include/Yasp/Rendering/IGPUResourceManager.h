@@ -15,6 +15,7 @@ namespace yasp
 		virtual ~IGPUResourceManager() = 0 {};
 		virtual GPUResourceID CreateBuffer(BufferDesc bufferDesc, void* initialData) = 0;
 		virtual GPUResourceID CreateVertexShader(const std::string& filename) = 0;
+		virtual GPUResourceID CreatePixelShader(const std::string& filename) = 0;
 	/*	virtual GPUResourceID CreateTexture(TextureDesc textureDesc) = 0;
 		virtual GPUResourceID CreateTextureView(TextureViewDesc textureViewDesc, GPUResourceID texture) = 0;
 		virtual GPUResourceID CreateShader(ShaderDesc shaderDesc) = 0;
@@ -23,6 +24,13 @@ namespace yasp
 		virtual GPUResourceID CreateDepthTest(DepthStencilDesc depthTestDesc) = 0;
 		virtual GPUResourceID CreateDepthStencil(DepthStencilViewDesc depthStencilDesc) = 0;
 		virtual GPUResourceID CreateRenderTarget(RenderTargetDesc renderTargetDesc) = 0;*/
+
+		virtual void UpdateBuffer(GPUResourceID id, void* data, uint32 size) = 0;
+
+		virtual void SetVertexBuffer(GPUResourceID id, uint32 stride, uint32 offset) = 0;
+		virtual void SetVertexShaderBuffer(GPUResourceID id, uint32 slot) = 0;
+		virtual void SetVertexShader(GPUResourceID id) = 0;
+		virtual void SetPixelShader(GPUResourceID id) = 0;
 	};
 };
 

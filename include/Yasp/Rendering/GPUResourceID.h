@@ -40,6 +40,8 @@ namespace yasp
 			(*refCount)++;
 			return *this;
 		}
+
+		uint32 ID() const { return uid; }
 		
 		bool operator==(const GPUResourceID& rhs) const { return rhs.uid == this->uid; }
 

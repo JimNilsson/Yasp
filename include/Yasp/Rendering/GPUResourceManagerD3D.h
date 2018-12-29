@@ -17,8 +17,17 @@ namespace yasp
 
 		GPUResourceID CreateBuffer(BufferDesc bufferDesc, void* initialData) override final;
 		GPUResourceID CreateVertexShader(const std::string& filename) override final;
+		GPUResourceID CreatePixelShader(const std::string& filename) override final;
+
+		void UpdateBuffer(GPUResourceID id, void* data, uint32 size) override final;
+
+		void SetVertexBuffer(GPUResourceID id, uint32 stride, uint32 offset);
+		void SetVertexShaderBuffer(GPUResourceID id, uint32 slot);
+		void SetVertexShader(GPUResourceID id);
+		void SetPixelShader(GPUResourceID id);
+
 	private:
-		void ShaderReflection(ID3DBlob* shaderByteCode);
+		void VertexShaderReflection(ID3DBlob* shaderByteCode);
 	private:
 		ID3D11Device* device;
 		ID3D11DeviceContext* deviceContext;

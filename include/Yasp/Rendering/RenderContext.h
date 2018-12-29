@@ -23,6 +23,15 @@ namespace yasp
 		void Clear();
 		void Display();
 
+		void SetTopology(Topology topology);
+		void SetViewport(Viewport viewport);
+
+		void Draw(uint32 vertexCount, uint32 offset);
+		void DrawIndexed(uint32 indexCount, uint32 indexOffset, uint32 vertexOffset);
+		void DrawInstanced(uint32 vertexCountPerInstance, uint32 vertexOffset, uint32 instanceCount, uint32 instanceOffset);
+		void DrawAuto();
+		void DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 indexOffset, uint32 vertexOffset, uint32 instanceCount, uint32 instanceOffset);
+
 
 	};
 };

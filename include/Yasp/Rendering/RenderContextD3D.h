@@ -20,6 +20,15 @@ namespace yasp
 
 		void Clear() override final;
 		void Display() override final;
+
+		void SetTopology(Topology topology) override final;
+		void SetViewport(Viewport viewport) override final;
+
+		void Draw(uint32 vertexCount, uint32 offset) override final;
+		void DrawIndexed(uint32 indexCount, uint32 indexOffset, uint32 vertexOffset) override final;
+		void DrawInstanced(uint32 vertexCountPerInstance, uint32 vertexOffset, uint32 instanceCount, uint32 instanceOffset) override final;
+		void DrawAuto() override final;
+		void DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 indexOffset, uint32 vertexOffset, uint32 instanceCount, uint32 instanceOffset) override final;
 	private:
 		HWND windowHandle;
 		ID3D11Device * device;

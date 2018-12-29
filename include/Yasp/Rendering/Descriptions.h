@@ -83,6 +83,16 @@ namespace yasp
 		StencilOp onBackFace;
 	};
 
+	struct Viewport
+	{
+		float topLeftX;
+		float topLeftY;
+		float width;
+		float height;
+		float minDepth;
+		float maxDepth;
+	};
+
 	struct DepthStencilViewDesc
 	{
 		Texture2DFormat format;

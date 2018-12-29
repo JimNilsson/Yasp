@@ -137,6 +137,7 @@
     <ClInclude Include="..\include\Yasp\Config.h" />
     <ClInclude Include="..\include\Yasp\Math.h" />
     <ClInclude Include="..\include\Yasp\SwizzleVec.h" />
+    <ClInclude Include="..\include\Yasp\Timer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source.cpp" />

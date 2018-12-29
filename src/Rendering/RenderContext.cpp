@@ -28,3 +28,38 @@ void yasp::RenderContext::Display()
 {
 	renderContext->Display();
 }
+
+void yasp::RenderContext::SetTopology(Topology topology)
+{
+	renderContext->SetTopology(topology);
+}
+
+void yasp::RenderContext::SetViewport(Viewport viewport)
+{
+	renderContext->SetViewport(viewport);
+}
+
+void yasp::RenderContext::Draw(uint32 vertexCount, uint32 offset)
+{
+	renderContext->Draw(vertexCount, offset);
+}
+
+void yasp::RenderContext::DrawIndexed(uint32 indexCount, uint32 indexOffset, uint32 vertexOffset)
+{
+	renderContext->DrawIndexed(indexCount, indexOffset, vertexOffset);
+}
+
+void yasp::RenderContext::DrawInstanced(uint32 vertexCountPerInstance, uint32 vertexOffset, uint32 instanceCount, uint32 instanceOffset)
+{
+	renderContext->DrawInstanced(vertexCountPerInstance, vertexOffset, instanceCount, instanceOffset);
+}
+
+void yasp::RenderContext::DrawAuto()
+{
+	renderContext->DrawAuto();
+}
+
+void yasp::RenderContext::DrawIndexedInstanced(uint32 indexCountPerInstance, uint32 indexOffset, uint32 vertexOffset, uint32 instanceCount, uint32 instanceOffset)
+{
+	renderContext->DrawIndexedInstanced(indexCountPerInstance, indexOffset, vertexOffset, instanceCount, instanceOffset);
+}
