@@ -17,6 +17,9 @@ namespace yasp
 		virtual GPUResourceID CreateVertexShader(const std::string& filename) = 0;
 		virtual GPUResourceID CreatePixelShader(const std::string& filename) = 0;
 		virtual GPUResourceID CreateRasterizer(RasterizerDesc rasterizerDesc) = 0;
+		virtual GPUResourceID CreateTexture2D(const Texture2DDesc& textureDesc, void* data = nullptr) = 0;
+		virtual GPUResourceID CreateTexture2DView(const Texture2DViewDesc& textureViewDesc, const GPUResourceID& texture) = 0;
+		virtual GPUResourceID CreateSampler(const SamplerDesc& samplerDesc) = 0;
 	/*	virtual GPUResourceID CreateTexture(TextureDesc textureDesc) = 0;
 		virtual GPUResourceID CreateTextureView(TextureViewDesc textureViewDesc, GPUResourceID texture) = 0;
 		virtual GPUResourceID CreateShader(ShaderDesc shaderDesc) = 0;
@@ -32,6 +35,7 @@ namespace yasp
 		virtual void SetIndexBuffer(const GPUResourceID& id, IndexFormat format, uint32 offset) = 0;
 		virtual void SetShaderBuffers(Shader shader, GPUResourceID* buffers, uint32 startSlot, uint32 count) = 0;
 		virtual void SetShaderTextureViews(Shader shader, GPUResourceID* textureViews, uint32 startSlot, uint32 count) = 0;
+		virtual void SetShaderSamplers(Shader shader, GPUResourceID* samplers, uint32 startSlot, uint32 count) = 0;
 		virtual void SetVertexShader(const GPUResourceID& id) = 0;
 		virtual void SetGeometryShader(const GPUResourceID& id) = 0;
 		virtual void SetPixelShader(const GPUResourceID& id) = 0;

@@ -19,6 +19,9 @@ namespace yasp
 		GPUResourceID CreateVertexShader(const std::string& filename) override final;
 		GPUResourceID CreatePixelShader(const std::string& filename) override final;
 		GPUResourceID CreateRasterizer(RasterizerDesc rasterizerDesc) override final;
+		GPUResourceID CreateTexture2D(const Texture2DDesc& textureDesc, void* data = nullptr) override final;
+		GPUResourceID CreateTexture2DView(const Texture2DViewDesc& textureViewDesc, const GPUResourceID& texture) override final;
+		GPUResourceID CreateSampler(const SamplerDesc& samplerDesc) override final;
 
 		void UpdateBuffer(GPUResourceID id, void* data, uint32 size) override final;
 
@@ -26,6 +29,7 @@ namespace yasp
 		void SetIndexBuffer(const GPUResourceID& id, IndexFormat format, uint32 offset) override final;
 		void SetShaderBuffers(Shader shader, GPUResourceID* buffers, uint32 startSlot, uint32 count) override final;
 		void SetShaderTextureViews(Shader shader, GPUResourceID* textureViews, uint32 startSlot, uint32 count) override final;
+		void SetShaderSamplers(Shader shader, GPUResourceID* samplers, uint32 startSlot, uint32 count) override final;
 		void SetVertexShader(const GPUResourceID& id) override final;
 		void SetGeometryShader(const GPUResourceID& id) override final;
 		void SetPixelShader(const GPUResourceID& id) override final;
@@ -49,7 +53,7 @@ namespace yasp
 				ID3D11GeometryShader* geometryShader;
 				ID3D11PixelShader* pixelShader;
 				ID3D11ComputeShader* computeShader;
-				ID3D11Texture2D* texture;
+				ID3D11Texture2D* texture2D;
 				ID3D11ShaderResourceView* shaderResourceView;
 				ID3D11RenderTargetView* renderTargetView;
 				ID3D11DepthStencilView* depthStencilView;
@@ -57,6 +61,7 @@ namespace yasp
 				ID3D11RasterizerState* rasterizerState;
 				ID3D11BlendState* blendState;
 				ID3D11InputLayout* inputLayout;
+				ID3D11SamplerState* sampler;
 			};
 			
 		};

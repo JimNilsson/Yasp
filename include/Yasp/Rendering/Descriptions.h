@@ -3,6 +3,7 @@
 
 #include <Yasp/Config.h>
 #include <Yasp/Rendering/Enums.h>
+#include <Yasp/SwizzleVec.h>
 
 namespace yasp
 {
@@ -20,7 +21,7 @@ namespace yasp
 		Usage usage;
 	};
 	
-	struct TextureDesc
+	struct Texture2DDesc
 	{
 		int32 width;
 		int32 height;
@@ -33,14 +34,25 @@ namespace yasp
 		TextureBind bind;
 	};
 
-	struct TextureViewDesc
+	struct Texture2DViewDesc
 	{
 		TextureFormat format;
-		TextureDimension dimension;
 		int32 mipLevels;
 		int32 mostDetailedMip;
-		int32 arraySize;
-		int32 arraySlice;
+	};
+
+	struct SamplerDesc
+	{
+		TextureFilter filter;
+		TextureWrapping wrapModeU;
+		TextureWrapping wrapModeV;
+		TextureWrapping wrapModeW;
+		float mipLODBias;
+		ComparisonFunc comparisonFunc;
+		float4 borderColor;
+		float minLOD;
+		float maxLOD;
+		int32 maxAnisotropy;
 	};
 	
 	struct ShaderDesc
@@ -75,7 +87,7 @@ namespace yasp
 	{
 		bool performTest;
 		DepthWriteMask depthWriteMask;
-		StencilComparisonMode comparisonMode;
+		ComparisonFunc comparisonMode;
 		bool writeStencil;
 		uint8 stencilReadMask;
 		uint8 stencilWriteMask;

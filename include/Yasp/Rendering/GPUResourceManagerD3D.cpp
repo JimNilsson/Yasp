@@ -6,6 +6,37 @@
 #pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "dxguid.lib")
 
+const int32 textureFormatMap[] = {
+	(int32)DXGI_FORMAT_R32G32B32A32_TYPELESS,
+	(int32)DXGI_FORMAT_R32G32B32_TYPELESS,
+	(int32)DXGI_FORMAT_R32G32_TYPELESS,
+	(int32)DXGI_FORMAT_R32_TYPELESS,
+	(int32)DXGI_FORMAT_R32G32B32A32_FLOAT,
+	(int32)DXGI_FORMAT_R32G32B32_FLOAT,
+	(int32)DXGI_FORMAT_R32G32_FLOAT,
+	(int32)DXGI_FORMAT_R32_FLOAT,
+	(int32)DXGI_FORMAT_R32G32B32A32_SINT,
+	(int32)DXGI_FORMAT_R32G32B32_SINT,
+	(int32)DXGI_FORMAT_R32G32_SINT,
+	(int32)DXGI_FORMAT_R32_SINT,
+	(int32)DXGI_FORMAT_R32G32B32A32_UINT,
+	(int32)DXGI_FORMAT_R32G32B32_UINT,
+	(int32)DXGI_FORMAT_R32G32_UINT,
+	(int32)DXGI_FORMAT_R32_UINT,
+	(int32)DXGI_FORMAT_R16G16B16A16_TYPELESS,
+	(int32)DXGI_FORMAT_R16G16B16A16_FLOAT,
+	(int32)DXGI_FORMAT_R16G16B16A16_UNORM,
+	(int32)DXGI_FORMAT_R16G16B16A16_SNORM,
+	(int32)DXGI_FORMAT_R16G16B16A16_UINT,
+	(int32)DXGI_FORMAT_R16G16B16A16_SINT,
+	(int32)DXGI_FORMAT_R24G8_TYPELESS,
+	(int32)DXGI_FORMAT_D24_UNORM_S8_UINT,
+	(int32)DXGI_FORMAT_R8G8B8A8_UINT,
+	(int32)DXGI_FORMAT_R8G8B8A8_SINT,
+	(int32)DXGI_FORMAT_R8G8B8A8_UNORM,
+	(int32)DXGI_FORMAT_R8G8B8A8_SNORM,
+};
+
 yasp::GPUResourceManagerD3D::GPUResourceManagerD3D(RenderContextD3D * renderContext) : resourceCounter(0)
 {
 	this->device = renderContext->Device();
@@ -50,6 +81,9 @@ yasp::GPUResourceManagerD3D::~GPUResourceManagerD3D()
 			break;
 		case ResourceType::RASTERIZER:
 			r.second.rasterizerState->Release();
+			break;
+		case ResourceType::TEXTURE2D:
+			r.second.texture2D->Release();
 			break;
 		}
 		
@@ -197,6 +231,124 @@ yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreateRasterizer(RasterizerDesc
 	return id;
 }
 
+yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreateTexture2D(const Texture2DDesc & textureDesc, void * data)
+{
+	D3D11_TEXTURE2D_DESC td = {};
+	td.Width = textureDesc.width;
+	td.Height = textureDesc.height;
+	td.ArraySize = textureDesc.arraySize;
+	td.MipLevels = textureDesc.mipLevels;
+	td.SampleDesc.Count = textureDesc.sampleCount;
+	td.SampleDesc.Quality = textureDesc.sampleQuality;
+	switch (textureDesc.usage)
+	{
+	case Usage::CPU_READ_WRITE:
+		td.Usage = D3D11_USAGE_STAGING;
+		td.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+		break;
+	case Usage::GPU_READ:
+		td.Usage = D3D11_USAGE_IMMUTABLE;
+		break;
+	case Usage::GPU_READ_CPU_WRITE:
+		td.Usage = D3D11_USAGE_DYNAMIC;
+		td.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		break;
+	case Usage::GPU_READ_WRITE:
+		td.Usage = D3D11_USAGE_DEFAULT;
+		break;
+	}
+
+	td.BindFlags |= textureDesc.bind & TextureBind::TEXTURE_BIND_SHADER_VIEW ? D3D11_BIND_SHADER_RESOURCE : 0U;
+	td.BindFlags |= textureDesc.bind & TextureBind::TEXTURE_BIND_RENDER_TARGET ? D3D11_BIND_RENDER_TARGET : 0U;
+	td.BindFlags |= textureDesc.bind & TextureBind::TEXTURE_BIND_DEPTH_TARGET ? D3D11_BIND_DEPTH_STENCIL : 0U;
+
+	td.Format = (DXGI_FORMAT)textureFormatMap[(int32)textureDesc.format];
+	
+	ID3D11Texture2D* texture;
+	D3D11_SUBRESOURCE_DATA sd = {};
+	sd.pSysMem = data;
+	sd.SysMemPitch = 4 * td.Width;
+
+	HRESULT hr = device->CreateTexture2D(&td, &sd, &texture);
+	assert(SUCCEEDED(hr));
+	auto id = GPUResourceID(resourceCounter++);
+	resourceMap[id] = { ResourceType::TEXTURE2D, texture };
+	return id;
+}
+
+yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreateTexture2DView(const Texture2DViewDesc & textureViewDesc, const GPUResourceID & texture)
+{
+	D3D11_SHADER_RESOURCE_VIEW_DESC srvd = {};
+	srvd.Format = (DXGI_FORMAT)textureFormatMap[(int32)textureViewDesc.format];
+	srvd.Texture2D.MipLevels = textureViewDesc.mipLevels;
+	srvd.Texture2D.MostDetailedMip = textureViewDesc.mostDetailedMip;
+	srvd.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;	
+
+	ID3D11ShaderResourceView* srv;
+	HRESULT hr = device->CreateShaderResourceView(resourceMap[texture].texture2D, &srvd, &srv);
+	assert(SUCCEEDED(hr));
+	auto id = GPUResourceID(resourceCounter++);
+	resourceMap[id] = { ResourceType::TEXTURE_VIEW, srv };
+	return id;
+}
+
+yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreateSampler(const SamplerDesc & samplerDesc)
+{
+	D3D11_SAMPLER_DESC sd = {};
+	const int32 samplerMap[] = {
+		D3D11_TEXTURE_ADDRESS_BORDER,
+		D3D11_TEXTURE_ADDRESS_CLAMP,
+		D3D11_TEXTURE_ADDRESS_WRAP,
+		D3D11_TEXTURE_ADDRESS_MIRROR
+	};
+
+	const int32 comparisonMap[] = {
+		D3D11_COMPARISON_NEVER,
+		D3D11_COMPARISON_LESS,
+		D3D11_COMPARISON_EQUAL,
+		D3D11_COMPARISON_LESS_EQUAL,
+		D3D11_COMPARISON_GREATER,
+		D3D11_COMPARISON_NOT_EQUAL,
+		D3D11_COMPARISON_GREATER_EQUAL,
+		D3D11_COMPARISON_ALWAYS
+	};
+	
+	sd.AddressU = (D3D11_TEXTURE_ADDRESS_MODE)samplerMap[(int32)samplerDesc.wrapModeU];
+	sd.AddressV = (D3D11_TEXTURE_ADDRESS_MODE)samplerMap[(int32)samplerDesc.wrapModeV];
+	sd.AddressW = (D3D11_TEXTURE_ADDRESS_MODE)samplerMap[(int32)samplerDesc.wrapModeW];
+	sd.BorderColor[0] = samplerDesc.borderColor.x;
+	sd.BorderColor[1] = samplerDesc.borderColor.y;
+	sd.BorderColor[2] = samplerDesc.borderColor.z;
+	sd.BorderColor[3] = samplerDesc.borderColor.w;
+	sd.ComparisonFunc = (D3D11_COMPARISON_FUNC)comparisonMap[(int32)samplerDesc.comparisonFunc];
+	switch (samplerDesc.filter)
+	{
+	case TextureFilter::ANISOTROPIC:
+		sd.Filter = D3D11_FILTER_ANISOTROPIC;
+		break;
+	case TextureFilter::POINT:
+		sd.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+		break;
+	case TextureFilter::BILINEAR:
+		sd.Filter = D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+		break;
+	case TextureFilter::TRILINEAR:
+		sd.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		break;
+	}
+	sd.MaxAnisotropy = samplerDesc.maxAnisotropy;
+	sd.MaxLOD = samplerDesc.maxLOD;
+	sd.MinLOD = samplerDesc.minLOD;
+	sd.MipLODBias = samplerDesc.mipLODBias;
+
+	ID3D11SamplerState* sampler;
+	HRESULT hr = device->CreateSamplerState(&sd, &sampler);
+	assert(SUCCEEDED(hr));
+	auto id = GPUResourceID(resourceCounter++);
+	resourceMap[id] = { ResourceType::TEXTURE_VIEW, sampler };
+	return id;
+}
+
 void yasp::GPUResourceManagerD3D::UpdateBuffer(GPUResourceID id, void * data, uint32 size)
 {
 	if (auto f = resourceMap.find(id); f != resourceMap.end())
@@ -258,6 +410,66 @@ void yasp::GPUResourceManagerD3D::SetShaderBuffers(Shader shader, GPUResourceID 
 
 void yasp::GPUResourceManagerD3D::SetShaderTextureViews(Shader shader, GPUResourceID * textureViews, uint32 startSlot, uint32 count)
 {
+	std::vector<ID3D11ShaderResourceView*> srvs(count, nullptr);
+	for (uint32 i = 0; i < count; i++)
+	{
+		if (auto f = resourceMap.find(textureViews[i]); f != resourceMap.end())
+		{
+			srvs[i] = f->second.shaderResourceView;
+		}
+		else
+		{
+			srvs[i] = nullptr;
+		}
+	}
+
+	switch (shader)
+	{
+	case Shader::VERTEX:
+		deviceContext->VSSetShaderResources(startSlot, count, srvs.data());
+		break;
+	case Shader::GEOMETRY:
+		deviceContext->GSSetShaderResources(startSlot, count, srvs.data());
+		break;
+	case Shader::PIXEL:
+		deviceContext->PSSetShaderResources(startSlot, count, srvs.data());
+		break;
+	case Shader::COMPUTE:
+		deviceContext->CSSetShaderResources(startSlot, count, srvs.data());
+		break;
+	}
+}
+
+void yasp::GPUResourceManagerD3D::SetShaderSamplers(Shader shader, GPUResourceID * samplers, uint32 startSlot, uint32 count)
+{
+	std::vector<ID3D11SamplerState*> d3dsamplers(count, nullptr);
+	for (uint32 i = 0; i < count; i++)
+	{
+		if (auto f = resourceMap.find(samplers[i]); f != resourceMap.end())
+		{
+			d3dsamplers[i] = f->second.sampler;
+		}
+		else
+		{
+			d3dsamplers[i] = nullptr;
+		}
+	}
+
+	switch (shader)
+	{
+	case Shader::VERTEX:
+		deviceContext->VSSetSamplers(startSlot, count, d3dsamplers.data());
+		break;
+	case Shader::GEOMETRY:
+		deviceContext->GSSetSamplers(startSlot, count, d3dsamplers.data());
+		break;
+	case Shader::PIXEL:
+		deviceContext->PSSetSamplers(startSlot, count, d3dsamplers.data());
+		break;
+	case Shader::COMPUTE:
+		deviceContext->CSSetSamplers(startSlot, count, d3dsamplers.data());
+		break;
+	}
 }
 
 void yasp::GPUResourceManagerD3D::SetVertexShader(const GPUResourceID& id)

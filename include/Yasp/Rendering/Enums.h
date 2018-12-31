@@ -62,14 +62,18 @@ namespace yasp
 		UINT16_4,
 		INT16_4,
 		TYPELESS24_TYPELESS8,
-		DEPTH24_STENCIL8
+		DEPTH24_STENCIL8,
+		UINT8_4,
+		SINT8_4,
+		UNORM8_4,
+		SNORM8_4
 	};
 
-	enum class TextureBind : int32
+	enum TextureBind : int32
 	{
-		SHADER_VIEW,
-		RENDER_TARGET,
-		DEPTH_TARGET
+		TEXTURE_BIND_SHADER_VIEW = 1 << 0,
+		TEXTURE_BIND_RENDER_TARGET = 1 << 1,
+		TEXTURE_BIND_DEPTH_TARGET = 1 << 2
 	};
 
 	enum class TextureDimension : int32
@@ -130,11 +134,7 @@ namespace yasp
 		POINT,
 		BILINEAR,
 		TRILINEAR,
-		ANISOTROPIC_1,
-		ANISOTROPIC_2,
-		ANISOTROPIC_4,
-		ANISOTROPIC_8,
-		ANISOTROPIC_16
+		ANISOTROPIC
 	};
 
 	enum class TextureWrapping : int32
@@ -198,7 +198,7 @@ namespace yasp
 		DECR
 	};
 
-	enum class StencilComparisonMode : int32
+	enum class ComparisonFunc : int32
 	{
 		NEVER,
 		LESS,
@@ -231,7 +231,7 @@ namespace yasp
 		PIXEL_SHADER,
 		COMPUTE_SHADER,
 		INPUT_LAYOUT,
-		TEXTURE,
+		TEXTURE2D,
 		RENDER_TARGET,
 		TEXTURE_VIEW,
 		DEPTH_STENCIL_STATE,
