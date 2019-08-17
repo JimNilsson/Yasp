@@ -24,6 +24,7 @@ namespace yasp
 		virtual int32_t GetHeight() const = 0;
 		virtual float GetAspectRatio() const = 0;;
 		virtual void PollEvents() = 0;
+		virtual void Close() = 0;
 
 		NOMOVORCOPY(IWindow);
 	};

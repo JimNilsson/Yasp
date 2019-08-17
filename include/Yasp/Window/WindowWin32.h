@@ -15,16 +15,20 @@ namespace yasp
 		HINSTANCE hinstance;
 		WNDCLASSEX wc;
 
-		uint32_t width;
-		uint32_t height;
+		RECT origClip;
+		RECT confinedClip;
+
+		int32_t width;
+		int32_t height;
 		bool fullscreen;
 
 		bool cursorVisible;
+		bool currentlyGrabbing;
 
 		bool open;
 		static LRESULT CALLBACK OnEventProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 		static std::unordered_map<uint32_t, Keyboard::Key> keyMapping;
-		void Close();
+
 	public:
 		WindowWin32(uint32_t width, uint32_t height, bool fullscreen = false);
 		~WindowWin32();
@@ -40,6 +44,7 @@ namespace yasp
 		int32_t GetHeight() const override final;
 		float GetAspectRatio() const override final;
 		void PollEvents() override final;
+		void Close() override final;
 	};
 };
 

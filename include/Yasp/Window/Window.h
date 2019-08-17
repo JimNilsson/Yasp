@@ -25,6 +25,7 @@ namespace yasp
 		int32_t GetHeight() const;
 		float GetAspectRatio() const;
 		void PollEvents();
+		void Close();
 
 		NOMOVORCOPY(Window);
 	};

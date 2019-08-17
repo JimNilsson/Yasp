@@ -296,10 +296,10 @@ yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreateSampler(const SamplerDesc
 {
 	D3D11_SAMPLER_DESC sd = {};
 	const int32 samplerMap[] = {
-		D3D11_TEXTURE_ADDRESS_BORDER,
 		D3D11_TEXTURE_ADDRESS_CLAMP,
 		D3D11_TEXTURE_ADDRESS_WRAP,
-		D3D11_TEXTURE_ADDRESS_MIRROR
+		D3D11_TEXTURE_ADDRESS_MIRROR,
+		D3D11_TEXTURE_ADDRESS_BORDER
 	};
 
 	const int32 comparisonMap[] = {
@@ -506,6 +506,10 @@ void yasp::GPUResourceManagerD3D::SetRasterizer(const GPUResourceID& id)
 
 void yasp::GPUResourceManagerD3D::SetBlendState(const GPUResourceID & id, const float * blendFactor, uint32 mask)
 {
+	if (auto f = resourceMap.find(id); f != resourceMap.end())
+	{
+		deviceContext->OMSetBlendState(f->second.blendState, blendFactor, mask);
+	}
 }
 
 

@@ -99,11 +99,11 @@ LRESULT yasp::WindowWin32::OnEventProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 	{
 	case WM_CLOSE:
 		DestroyWindow(hwnd);
-		source->Close();
+		source->open = false;
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
-		source->Close();
+		source->open = false;
 		break;
 	case WM_INPUT:
 	{
@@ -321,12 +321,41 @@ LRESULT yasp::WindowWin32::OnEventProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 			switch (raw->data.mouse.usFlags)
 			{
 			case MOUSE_MOVE_RELATIVE:
+			{
 				Mouse::SetRelativeMovement({ raw->data.mouse.lLastX , raw->data.mouse.lLastY });
 				POINT cp;
 				GetCursorPos(&cp);
 				ScreenToClient(hwnd, &cp);
 				Mouse::SetPos({ (int32_t)cp.x, (int32_t)cp.y });
+				if (source->currentlyGrabbing)
+				{
+					INT x = cp.x;
+					INT y = cp.y;
+					RECT cr;
+					GetClientRect(hwnd, &cr);
+					
+					if (cp.x < cr.left + 1)
+					{
+						x = cr.left + 1;
+					}
+					if (cp.x > cr.right - 1)
+					{
+						x = cr.right - 1;
+					}
+					if (cp.y > cr.bottom - 1)
+					{
+						y = cr.bottom - 1;
+					}
+					if (cp.y < cr.top + 1)
+					{
+						y = cr.top + 1;
+					}
+					POINT ncp = { x, y };
+					ClientToScreen(hwnd, &ncp);
+					SetCursorPos(ncp.x, ncp.y);
+				}
 				break;
+			}
 			case MOUSE_MOVE_ABSOLUTE:
 				Mouse::SetPos({ raw->data.mouse.lLastX , raw->data.mouse.lLastY });
 				break;
@@ -345,9 +374,10 @@ LRESULT yasp::WindowWin32::OnEventProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 void yasp::WindowWin32::Close()
 {
 	open = false;
+	DestroyWindow(hwnd);
 }
 
-yasp::WindowWin32::WindowWin32(uint32_t width, uint32_t height, bool fullscreen) : width(width), height(height), fullscreen(fullscreen), cursorVisible(true)
+yasp::WindowWin32::WindowWin32(uint32_t width, uint32_t height, bool fullscreen) : width(width), height(height), fullscreen(fullscreen), cursorVisible(true), currentlyGrabbing(false)
 {
 	hinstance = GetModuleHandle(0);
 	wc.cbSize = sizeof(WNDCLASSEX);
@@ -373,7 +403,13 @@ yasp::WindowWin32::WindowWin32(uint32_t width, uint32_t height, bool fullscreen)
 		CW_USEDEFAULT, CW_USEDEFAULT, width, height,
 		NULL, NULL, hinstance, this);
 
-
+	LONG style = GetWindowLong(hwnd, GWL_STYLE);
+	style &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZE | WS_MAXIMIZE | WS_SYSMENU);
+	SetWindowLong(hwnd, GWL_STYLE, style);
+	LONG exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+	exStyle &= ~(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
+	SetWindowLong(hwnd, GWL_EXSTYLE, exStyle);
+	SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
 	ShowWindow(hwnd, SW_SHOW);
 	UpdateWindow(hwnd);
 	open = true;
@@ -430,7 +466,7 @@ void yasp::WindowWin32::SetWindowVisibility(bool visible)
 
 void yasp::WindowWin32::SetGrabCursor(bool grabbing)
 {
-	//todo...
+	currentlyGrabbing = grabbing;
 }
 
 int32_t yasp::WindowWin32::GetWidth() const

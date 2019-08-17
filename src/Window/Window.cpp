@@ -65,3 +65,8 @@ void yasp::Window::PollEvents()
 {
 	window->PollEvents();
 }
+
+void yasp::Window::Close()
+{
+	window->Close();
+}
