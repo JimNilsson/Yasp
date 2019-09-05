@@ -150,6 +150,7 @@ yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreateVertexShader(const std::s
 
 	ID3D11VertexShader* vertexShader;
 	hr = device->CreateVertexShader(shaderCode->GetBufferPointer(), shaderCode->GetBufferSize(), nullptr, &vertexShader);
+
 	assert(SUCCEEDED(hr));
 	GPUResourceID id(resourceCounter++);
 	resourceMap[id] = { ResourceType::VERTEX_SHADER, vertexShader };
@@ -171,7 +172,9 @@ yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreatePixelShader(const std::st
 		0,
 		&shaderCode,
 		&errors);
+	//OutputDebugStringA((char*)errors->GetBufferPointer());
 	assert(SUCCEEDED(hr));
+	
 
 	ID3D11PixelShader* pixelShader;
 	hr = device->CreatePixelShader(shaderCode->GetBufferPointer(), shaderCode->GetBufferSize(), nullptr, &pixelShader);

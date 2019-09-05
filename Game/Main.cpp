@@ -36,6 +36,11 @@ struct Velocity : public yasp::float3
 	using yasp::float3::float3;
 };
 
+struct PointLight : public yasp::float4
+{
+	using yasp::float4::float4;
+};
+
 
 #include <unordered_map>
 
@@ -43,12 +48,16 @@ struct Velocity : public yasp::float3
 #include <Yasp/stb_image.h>
 int main(int argc, char** argv)
 {
-	yasp::EntityManager em;
 
+	yasp::EntityManager em;
+	yasp::float3 pos = { 0, 0, 0 };
+	yasp::float3 forward = { 0,0,1 };
+	yasp::float3 up = { 0,1,0 };
 	yasp::Entity e1 = em.Create();
 	yasp::Entity e2 = em.Create();
 	yasp::Entity e3 = em.Create();
 	yasp::Entity e4 = em.Create();
+	yasp::Entity e5 = em.Create();
 	std::cout << e1 << ", " << e2 << ", " << e3 << ", " << e4 << std::endl;
 	int a = 4;
 	int b = 5;
@@ -61,6 +70,7 @@ int main(int argc, char** argv)
 	em.Register(e2, Pos({ 0.0f, 0.0f, 3.0 }), Velocity({ 1.0f, 0.0f, 0.0f }));
 	em.Register(e3, Pos({ 0.0f, 0.0f, 3.0 }), Velocity({ 0.0f, 0.0f, 1.0f }));
 	em.Register(e4, Pos({ 0.0f, 0.0f, 3.0 }), Velocity({ 0.5f, 0.5f, 0.0f }));
+	
 
 
 	yasp::Window window(1280, 720);
@@ -78,6 +88,16 @@ int main(int argc, char** argv)
 
 	
 	auto wvpBuffer = renderContext.ResourceManager()->CreateBuffer(bd, &matrix);
+	auto worldBuffer = renderContext.ResourceManager()->CreateBuffer(bd, &matrix);
+	bd.size = sizeof(PointLight);
+	PointLight pl = { 0.0f, 0.5f, 0.0f, 10.0f };
+	auto lightBuffer = renderContext.ResourceManager()->CreateBuffer(bd, &pl);
+
+	yasp::float4 ppos = { pos.xyz, 1.0f };
+	bd.size = sizeof(yasp::float4);
+	auto eyeposBuffer = renderContext.ResourceManager()->CreateBuffer(bd, &ppos);
+	
+
 	auto pipe = renderContext.ResourceManager();
 	auto vshader = pipe->CreateVertexShader("SimpleVS.hlsl");
 	auto pshader = pipe->CreatePixelShader("SimplePS.hlsl");
@@ -96,24 +116,25 @@ int main(int argc, char** argv)
 	struct Vertex
 	{
 		yasp::float3 pos;
+		yasp::float3 nor;
 		yasp::float2 tex;
 	};
 
 	Vertex positions[14] = {
-		Vertex({ yasp::float3(-1.0f, -1.0f, -1.0f), yasp::float2(0.0f, 0.0f) }),
-		Vertex({ yasp::float3(1.0f, -1.0f, -1.0f),	 yasp::float2(1.0f, 0.0f) }),
-		Vertex({ yasp::float3(1.0f, -1.0f,  1.0f),	 yasp::float2(1.0f, 1.0f) }),
-		Vertex({ yasp::float3(1.0f,  1.0f, -1.0f),	 yasp::float2(0.0f, 1.0f) }),
-		Vertex({ yasp::float3(1.0f,  1.0f,  1.0f),	 yasp::float2(0.0f, 0.0f) }),
-		Vertex({ yasp::float3(-1.0f,  1.0f,  1.0f), yasp::float2(1.0f, 0.0f) }),
-		Vertex({ yasp::float3(1.0f, -1.0f,  1.0f),	 yasp::float2(1.0f, 1.0f) }),
-		Vertex({ yasp::float3(-1.0f, -1.0f,  1.0f), yasp::float2(0.0f, 1.0f) }),
-		Vertex({ yasp::float3(-1.0f, -1.0f, -1.0f), yasp::float2(0.0f, 0.0f) }),
-		Vertex({ yasp::float3(-1.0f,  1.0f,  1.0f), yasp::float2(1.0f, 0.0f) }),
-		Vertex({ yasp::float3(-1.0f,  1.0f, -1.0f), yasp::float2(1.0f, 1.0f) }),
-		Vertex({ yasp::float3(1.0f,  1.0f, -1.0f),	 yasp::float2(0.0f, 1.0f) }),
-		Vertex({ yasp::float3(-1.0f, -1.0f, -1.0f), yasp::float2(1.0f,0.0f) }),
-		Vertex({ yasp::float3(1.0f, -1.0f, -1.0f),	 yasp::float2(1.0f,1.0f) })
+		Vertex({ yasp::float3(-1.0f, -1.0f, -1.0f), yasp::float3(0.0f,-1.0f,0.0f), yasp::float2(0.0f, 0.0f) }),
+		Vertex({ yasp::float3(1.0f, -1.0f, -1.0f), yasp::float3(0.0f,-1.0f,0.0f), yasp::float2(1.0f, 0.0f) }),
+		Vertex({ yasp::float3(1.0f, -1.0f,  1.0f), yasp::float3(0.0f,-1.0f,0.0f),yasp::float2(1.0f, 1.0f) }),
+		Vertex({ yasp::float3(1.0f,  1.0f, -1.0f),	yasp::float3(1.0f,0.0f,0.0f), yasp::float2(0.0f, 1.0f) }),
+		Vertex({ yasp::float3(1.0f,  1.0f,  1.0f),	yasp::float3(1.0f,0.0f,0.0f), yasp::float2(0.0f, 0.0f) }),
+		Vertex({ yasp::float3(-1.0f,  1.0f,  1.0f), yasp::float3(0.0f,1.0f,0.0f),yasp::float2(1.0f, 0.0f) }),
+		Vertex({ yasp::float3(1.0f, -1.0f,  1.0f),	yasp::float3(0.0f,1.0f,0.0f), yasp::float2(1.0f, 1.0f) }),
+		Vertex({ yasp::float3(-1.0f, -1.0f,  1.0f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(0.0f, 1.0f) }),
+		Vertex({ yasp::float3(-1.0f, -1.0f, -1.0f),yasp::float3(-1.0f,0.0f,0.0f), yasp::float2(0.0f, 0.0f) }),
+		Vertex({ yasp::float3(-1.0f,  1.0f,  1.0f),yasp::float3(-1.0f,0.0f,0.0f), yasp::float2(1.0f, 0.0f) }),
+		Vertex({ yasp::float3(-1.0f,  1.0f, -1.0f),yasp::float3(-1.0f,0.0f,0.0f), yasp::float2(1.0f, 1.0f) }),
+		Vertex({ yasp::float3(1.0f,  1.0f, -1.0f),yasp::float3(-1.0f,0.0f,0.0f),	 yasp::float2(0.0f, 1.0f) }),
+		Vertex({ yasp::float3(-1.0f, -1.0f, -1.0f),yasp::float3(-1.0f,0.0f,0.0f), yasp::float2(1.0f,0.0f) }),
+		Vertex({ yasp::float3(1.0f, -1.0f, -1.0f),yasp::float3(-1.0f,0.0f,0.0f),	 yasp::float2(1.0f,1.0f) })
 	};
 
 	bd.bind = yasp::BIND_VERTEX_BUFFER;
@@ -124,10 +145,10 @@ int main(int argc, char** argv)
 	auto vbuffer = pipe->CreateBuffer(bd, positions);
 
 	Vertex floor[4] = {
-		Vertex({ yasp::float3(-0.5f, 0.0f, -0.5f), yasp::float2(0.0f, 0.0f) }),
-		Vertex({ yasp::float3(-0.5f, 0.0f, 0.5f), yasp::float2(10.0f, 0.0f) }),
-		Vertex({ yasp::float3(0.5f, 0.0f, -0.5f), yasp::float2(0.0f, 10.0f) }),
-		Vertex({ yasp::float3(0.5f, 0.0f, 0.5f), yasp::float2(10.0f, 10.0f) })
+		Vertex({ yasp::float3(-5.5f, 0.0f, -5.5f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(0.0f, 0.0f) }),
+		Vertex({ yasp::float3(-5.5f, 0.0f, 5.5f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(10.0f, 0.0f) }),
+		Vertex({ yasp::float3(5.5f, 0.0f, -5.5f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(0.0f, 10.0f) }),
+		Vertex({ yasp::float3(5.5f, 0.0f, 5.5f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(10.0f, 10.0f) })
 	};
 
 	bd.size = 4 * sizeof(Vertex);
@@ -135,6 +156,7 @@ int main(int argc, char** argv)
 
 	pipe->SetVertexBuffer(vbuffer, sizeof(Vertex), 0);
 	pipe->SetShaderBuffers(yasp::Shader::VERTEX, &wvpBuffer, 0, 1);
+	pipe->SetShaderBuffers(yasp::Shader::VERTEX, &worldBuffer, 1, 1);
 	renderContext.SetTopology(yasp::Topology::TRIANGLE_STRIP);
 	renderContext.SetViewport({
 		0.0f,
@@ -146,7 +168,7 @@ int main(int argc, char** argv)
 	});
 
 	int imw, imh, imc;
-	auto imdata = stbi_load("yuki.png", &imw, &imh, &imc, 4);
+	auto imdata = stbi_load("floor.png", &imw, &imh, &imc, 4);
 
 	yasp::Texture2DDesc td;
 	td.arraySize = 1;
@@ -192,13 +214,14 @@ int main(int argc, char** argv)
 	auto sampler = pipe->CreateSampler(samd);
 
 	pipe->SetShaderSamplers(yasp::Shader::PIXEL, &sampler, 0, 1);
+	pipe->SetShaderBuffers(yasp::Shader::PIXEL, &lightBuffer, 0, 1);
 	
-	
-	yasp::float3 pos = { 0, 0, 0 };
-	yasp::float3 forward = { 0,0,1 };
-	yasp::float3 up = { 0,1,0 };
+
 	float speed = 3.0f;
 	float rotSpeed = 10.25f;
+
+	float lang = 0.0f;
+	pipe->SetShaderBuffers(yasp::Shader::PIXEL, &eyeposBuffer, 1, 1);
 	
 	yasp::Timer timer;
 	float rot = 0;
@@ -253,6 +276,15 @@ int main(int argc, char** argv)
 			up = yasp::normalize((rot * yasp::float4(up, 0.0f)).xyz);
 		}
 
+		lang += dt;
+
+		pl.x = 3 * cos(lang);
+		pl.z = 3 * sin(lang);
+
+		pipe->UpdateBuffer(lightBuffer, &pl, sizeof(pl));
+		ppos = yasp::float4(pos.xyz, 1.0f);
+		pipe->UpdateBuffer(eyeposBuffer, &ppos, sizeof(ppos));
+
 		renderContext.Clear();
 		auto model = yasp::mat4::Identity();
 		view = yasp::mat4::LookToLH(pos, forward, up);
@@ -268,6 +300,8 @@ int main(int argc, char** argv)
 			model = yasp::mat4::Translation(p);
 			auto newmat = ~(model * view * projection);
 			pipe->UpdateBuffer(wvpBuffer, &newmat, sizeof(newmat));
+			auto wmat = ~model;
+			pipe->UpdateBuffer(worldBuffer, &wmat, sizeof(wmat));
 			renderContext.Draw(14, 0);
 		});
 		if (accTime > 2.0f)
@@ -275,9 +309,11 @@ int main(int argc, char** argv)
 			accTime = 0.0f;
 		}
 		pipe->SetVertexBuffer(floorbuffer, sizeof(Vertex), 0);
-		auto floorMVP = yasp::mat4::Scale(20.0f, 0.0f, 20.0f) * view * projection;
+		auto floorMVP =  view * projection;
 		auto newmat = ~(floorMVP);
+		auto ident = yasp::mat4::Identity();
 		pipe->UpdateBuffer(wvpBuffer, &newmat, sizeof(newmat));
+		pipe->UpdateBuffer(worldBuffer, &ident, sizeof(ident));
 		pipe->SetShaderTextureViews(yasp::Shader::PIXEL, &srvFloor, 0, 1);
 		renderContext.Draw(4, 0);
 		renderContext.Display();
