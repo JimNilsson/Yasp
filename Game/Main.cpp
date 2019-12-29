@@ -293,18 +293,30 @@ int main(int argc, char** argv)
 		em.ForEach([&](yasp::Entity e, Pos& p, Velocity& v)
 		{
 			p += dt * v;
-			if (accTime > 2.0f)
+			if (accTime > 0.0f)
 			{
-				v.xyz = randvec().xyz;
+				auto dir = yasp::normalize(pos - p);
+				auto dist = yasp::length(pos - p);
+				if(dist > 3.0f)
+				{
+					v.xyz = dir.xyz;
+				}
+				else
+				{
+					auto tangential = yasp::cross(dir, { 0, 1, 0});
+					v.xyz = tangential.xyz * 5;
+				}
+				
+				//v.xyz = randvec().xyz;
 			}
-			model = yasp::mat4::Translation(p);
+			model = yasp::mat4::Scale(0.2, 0.2, 0.2) * yasp::mat4::Translation(p);
 			auto newmat = ~(model * view * projection);
 			pipe->UpdateBuffer(wvpBuffer, &newmat, sizeof(newmat));
 			auto wmat = ~model;
 			pipe->UpdateBuffer(worldBuffer, &wmat, sizeof(wmat));
 			renderContext.Draw(14, 0);
 		});
-		if (accTime > 2.0f)
+		if (accTime > 0.0f)
 		{
 			accTime = 0.0f;
 		}
