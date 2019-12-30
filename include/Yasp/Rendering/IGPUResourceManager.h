@@ -4,6 +4,8 @@
 #include <Yasp/Config.h>
 #include <Yasp/Rendering/GPUResourceID.h>
 #include <Yasp/Rendering/Descriptions.h>
+#include <Yasp/Rendering/IBuffer.h>
+#include <Yasp/Rendering/GPUBuffer.h>
 #include <string>
 
 namespace yasp
@@ -13,7 +15,7 @@ namespace yasp
 	public:
 		IGPUResourceManager() {};
 		virtual ~IGPUResourceManager() = 0 {};
-		virtual GPUResourceID CreateBuffer(BufferDesc bufferDesc, void* initialData) = 0;
+		virtual GPUBuffer CreateBuffer(BufferDesc bufferDesc, void* initialData) = 0;
 		virtual GPUResourceID CreateVertexShader(const std::string& filename) = 0;
 		virtual GPUResourceID CreatePixelShader(const std::string& filename) = 0;
 		virtual GPUResourceID CreateRasterizer(RasterizerDesc rasterizerDesc) = 0;
@@ -29,7 +31,7 @@ namespace yasp
 		virtual GPUResourceID CreateDepthStencil(DepthStencilViewDesc depthStencilDesc) = 0;
 		virtual GPUResourceID CreateRenderTarget(RenderTargetDesc renderTargetDesc) = 0;*/
 
-		virtual void UpdateBuffer(GPUResourceID id, void* data, uint32 size) = 0;
+		virtual void UpdateBuffer(const GPUResourceID& id, void* data, uint32 size) = 0;
 
 		virtual void SetVertexBuffer(const GPUResourceID& id, uint32 stride, uint32 offset) = 0;
 		virtual void SetIndexBuffer(const GPUResourceID& id, IndexFormat format, uint32 offset) = 0;

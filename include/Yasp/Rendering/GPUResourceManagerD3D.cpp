@@ -90,7 +90,7 @@ yasp::GPUResourceManagerD3D::~GPUResourceManagerD3D()
 	}
 }
 
-yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreateBuffer(BufferDesc bufferDesc, void * initialData)
+yasp::GPUBuffer yasp::GPUResourceManagerD3D::CreateBuffer(BufferDesc bufferDesc, void * initialData)
 {
 	D3D11_BUFFER_DESC bd = {};
 	bd.ByteWidth = bufferDesc.size;
@@ -128,7 +128,9 @@ yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreateBuffer(BufferDesc bufferD
 	HRESULT hr = device->CreateBuffer(&bd, &sd, &buffer);
 	assert(SUCCEEDED(hr));
 
-	GPUResourceID id(resourceCounter++);
+	//GPUBuffer id(resourceCounter++, this)
+	BufferD3D* baffer = new BufferD3D(this, bufferDesc.size, initialData);
+	GPUBuffer id(resourceCounter++, baffer);
 	resourceMap[id] = { ResourceType::BUFFER, buffer };
 	return id;
 }
@@ -352,7 +354,7 @@ yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreateSampler(const SamplerDesc
 	return id;
 }
 
-void yasp::GPUResourceManagerD3D::UpdateBuffer(GPUResourceID id, void * data, uint32 size)
+void yasp::GPUResourceManagerD3D::UpdateBuffer(const GPUResourceID& id, void * data, uint32 size)
 {
 	if (auto f = resourceMap.find(id); f != resourceMap.end())
 	{

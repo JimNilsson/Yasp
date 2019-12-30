@@ -1,24 +1,35 @@
 #ifndef YASP_BUFFER_D3D_H
 #define YASP_BUFFER_D3D_H
 
-#include <Yasp/Config.h>
 #include <Yasp/Rendering/IBuffer.h>
-#include <Yasp/Rendering/Descriptions.h>
-#include <d3d11.h>
-
+#include <Yasp/Rendering/AssignableMemory.h>
+#include <unordered_map>
 
 namespace yasp
 {
+	class GPUResourceManagerD3D;
+
 	class BufferD3D : public IBuffer
 	{
 	public:
-		BufferD3D(BufferDesc bufferDesc, void* initialData);
+		BufferD3D(GPUResourceManagerD3D* resourceManager, size_t size, void* initialData = nullptr);
 		~BufferD3D();
-	private:
-		ID3D11Buffer* buffer;
+		BufferD3D(const BufferD3D& other);
+		BufferD3D& operator=(const BufferD3D& other);
+		AssignableMemory operator[](const std::string& identifier) override final;
+		void Update(const GPUResourceID& id) override final;
+	
+	private: 
+		struct SizeOffset
+		{
+			size_t size;
+			size_t offset;
+		};
+		void* data;
+		size_t size;
+		GPUResourceManagerD3D* resourceManager;
+		std::unordered_map<std::string, SizeOffset> dataPoints;
 	};
-};
-
-
+}
 
 #endif

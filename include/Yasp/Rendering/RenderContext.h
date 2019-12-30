@@ -5,7 +5,6 @@
 #include <Yasp/Rendering/IRenderContext.h>
 #include <Yasp/Rendering/IGPUResourceManager.h>
 #include <Yasp/Rendering/Descriptions.h>
-#include <Yasp/Rendering/Buffer.h>
 
 
 namespace yasp

@@ -6,6 +6,9 @@
 #include <Yasp/Rendering/RenderContextD3D.h>
 #include <d3d11.h>
 #include <unordered_map>
+#include <Yasp/Rendering/IBuffer.h>
+#include <Yasp/Rendering/BufferD3D.h>
+#include <Yasp/Rendering/GPUBuffer.h>
 
 namespace yasp
 {
@@ -15,7 +18,7 @@ namespace yasp
 		GPUResourceManagerD3D(RenderContextD3D* renderContext);
 		~GPUResourceManagerD3D();
 
-		GPUResourceID CreateBuffer(BufferDesc bufferDesc, void* initialData) override final;
+		GPUBuffer CreateBuffer(BufferDesc bufferDesc, void* initialData) override final;
 		GPUResourceID CreateVertexShader(const std::string& filename) override final;
 		GPUResourceID CreatePixelShader(const std::string& filename) override final;
 		GPUResourceID CreateRasterizer(RasterizerDesc rasterizerDesc) override final;
@@ -23,7 +26,7 @@ namespace yasp
 		GPUResourceID CreateTexture2DView(const Texture2DViewDesc& textureViewDesc, const GPUResourceID& texture) override final;
 		GPUResourceID CreateSampler(const SamplerDesc& samplerDesc) override final;
 
-		void UpdateBuffer(GPUResourceID id, void* data, uint32 size) override final;
+		void UpdateBuffer(const GPUResourceID& id, void* data, uint32 size) override final;
 
 		void SetVertexBuffer(const GPUResourceID& id, uint32 stride, uint32 offset) override final;
 		void SetIndexBuffer(const GPUResourceID& id, IndexFormat format, uint32 offset) override final;
@@ -39,6 +42,7 @@ namespace yasp
 
 	private:
 		void VertexShaderReflection(ID3DBlob* shaderByteCode);
+
 	private:
 		ID3D11Device* device;
 		ID3D11DeviceContext* deviceContext;

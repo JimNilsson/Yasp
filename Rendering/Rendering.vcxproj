@@ -142,19 +142,27 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\include\Yasp\Rendering\BufferD3D.cpp" />
     <ClCompile Include="..\include\Yasp\Rendering\GPUResourceManagerD3D.cpp" />
     <ClCompile Include="..\src\Rendering\RenderContext.cpp" />
     <ClCompile Include="..\src\Rendering\RenderContextD3D.cpp" />
+    <ClCompile Include="..\src\Rendering\ShaderD3D.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\Yasp\Rendering\AssignableMemory.h" />
+    <ClInclude Include="..\include\Yasp\Rendering\BufferD3D.h" />
     <ClInclude Include="..\include\Yasp\Rendering\Descriptions.h" />
     <ClInclude Include="..\include\Yasp\Rendering\Enums.h" />
+    <ClInclude Include="..\include\Yasp\Rendering\GPUBuffer.h" />
     <ClInclude Include="..\include\Yasp\Rendering\GPUResourceID.h" />
     <ClInclude Include="..\include\Yasp\Rendering\GPUResourceManagerD3D.h" />
+    <ClInclude Include="..\include\Yasp\Rendering\IBuffer.h" />
     <ClInclude Include="..\include\Yasp\Rendering\IGPUResourceManager.h" />
     <ClInclude Include="..\include\Yasp\Rendering\IRenderContext.h" />
+    <ClInclude Include="..\include\Yasp\Rendering\IShader.h" />
     <ClInclude Include="..\include\Yasp\Rendering\RenderContext.h" />
     <ClInclude Include="..\include\Yasp\Rendering\RenderContextD3D.h" />
+    <ClInclude Include="..\include\Yasp\Rendering\ShaderD3D.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

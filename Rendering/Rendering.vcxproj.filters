@@ -33,6 +33,12 @@
     <ClCompile Include="..\include\Yasp\Rendering\GPUResourceManagerD3D.cpp">
       <Filter>Source Files\D3D</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\Rendering\ShaderD3D.cpp">
+      <Filter>Source Files\D3D</Filter>
+    </ClCompile>
+    <ClCompile Include="..\include\Yasp\Rendering\BufferD3D.cpp">
+      <Filter>Source Files\D3D</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Yasp\Rendering\Enums.h">
@@ -58,6 +64,24 @@
     </ClInclude>
     <ClInclude Include="..\include\Yasp\Rendering\GPUResourceManagerD3D.h">
       <Filter>Header Files\D3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Yasp\Rendering\IShader.h">
+      <Filter>Header Files\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Yasp\Rendering\ShaderD3D.h">
+      <Filter>Header Files\D3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Yasp\Rendering\IBuffer.h">
+      <Filter>Header Files\Interfaces</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Yasp\Rendering\AssignableMemory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Yasp\Rendering\BufferD3D.h">
+      <Filter>Header Files\D3D</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Yasp\Rendering\GPUBuffer.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

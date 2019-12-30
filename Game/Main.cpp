@@ -41,6 +41,21 @@ struct PointLight : public yasp::float4
 	using yasp::float4::float4;
 };
 
+class A {
+public:
+	A() {}
+	virtual ~A() {}
+	virtual int operator[](size_t) = 0;
+};
+
+class B : public A
+{
+public:
+	B() : A() {}
+	~B() {}
+	int operator[](size_t a) override final { return a; }
+};
+
 
 #include <unordered_map>
 
@@ -48,7 +63,7 @@ struct PointLight : public yasp::float4
 #include <Yasp/stb_image.h>
 int main(int argc, char** argv)
 {
-
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	yasp::EntityManager em;
 	yasp::float3 pos = { 0, 0, 0 };
 	yasp::float3 forward = { 0,0,1 };
@@ -101,6 +116,7 @@ int main(int argc, char** argv)
 	auto pipe = renderContext.ResourceManager();
 	auto vshader = pipe->CreateVertexShader("SimpleVS.hlsl");
 	auto pshader = pipe->CreatePixelShader("SimplePS.hlsl");
+	
 	auto rasterizer = pipe->CreateRasterizer({
 		yasp::FillMode::SOLID,
 		yasp::CullMode::NONE,
@@ -188,7 +204,7 @@ int main(int argc, char** argv)
 	td.height = imh;
 	td.width = imw;
 	auto floortex = pipe->CreateTexture2D(td, imdata);
-	
+	stbi_image_free(imdata);
 	yasp::Texture2DViewDesc tvd;
 	tvd.format = yasp::TextureFormat::UNORM8_4;
 	tvd.mipLevels = 1;
@@ -231,7 +247,7 @@ int main(int argc, char** argv)
 		window.PollEvents();
 		float dt = timer.Tick();
 		accTime += dt;
-		auto mp = yasp::float2(yasp::Mouse::GetPos().x, yasp::Mouse::GetPos().y);
+		auto mp = yasp::float2((float)yasp::Mouse::GetPos().x, (float)yasp::Mouse::GetPos().y);
 		if (yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::A))
 		{
 			auto right = yasp::cross(up, forward);
@@ -277,7 +293,7 @@ int main(int argc, char** argv)
 		}
 
 		lang += dt;
-
+		
 		pl.x = 3 * cos(lang);
 		pl.z = 3 * sin(lang);
 
@@ -309,9 +325,11 @@ int main(int argc, char** argv)
 				
 				//v.xyz = randvec().xyz;
 			}
-			model = yasp::mat4::Scale(0.2, 0.2, 0.2) * yasp::mat4::Translation(p);
+			model = yasp::mat4::Scale(0.2f, 0.2f, 0.2f) * yasp::mat4::Translation(p);
 			auto newmat = ~(model * view * projection);
-			pipe->UpdateBuffer(wvpBuffer, &newmat, sizeof(newmat));
+			wvpBuffer["Cocks"] = newmat;
+			wvpBuffer.Update();
+			//pipe->UpdateBuffer(wvpBuffer, &newmat, sizeof(newmat));
 			auto wmat = ~model;
 			pipe->UpdateBuffer(worldBuffer, &wmat, sizeof(wmat));
 			renderContext.Draw(14, 0);

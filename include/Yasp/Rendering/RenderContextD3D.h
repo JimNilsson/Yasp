@@ -3,7 +3,6 @@
 
 #include <Yasp/Config.h>
 #include <Yasp/Rendering/IRenderContext.h>
-#include <Yasp/Rendering/BufferD3D.h>
 #include <Yasp/Rendering/Descriptions.h>
 #include <d3d11.h>
 
