@@ -105,7 +105,7 @@ int main(int argc, char** argv)
 	auto wvpBuffer = renderContext.ResourceManager()->CreateBuffer(bd, &matrix);
 	auto worldBuffer = renderContext.ResourceManager()->CreateBuffer(bd, &matrix);
 	bd.size = sizeof(PointLight);
-	PointLight pl = { 0.0f, 0.5f, 0.0f, 10.0f };
+	PointLight pl = { 0.0f, 2.5f, 0.0f, 10.0f };
 	auto lightBuffer = renderContext.ResourceManager()->CreateBuffer(bd, &pl);
 
 	yasp::float4 ppos = { pos.xyz, 1.0f };
@@ -117,6 +117,8 @@ int main(int argc, char** argv)
 	auto vshader = pipe->CreateVertexShader("SimpleVS.hlsl");
 	auto pshader = pipe->CreatePixelShader("SimplePS.hlsl");
 	
+	
+
 	auto rasterizer = pipe->CreateRasterizer({
 		yasp::FillMode::SOLID,
 		yasp::CullMode::NONE,
@@ -171,8 +173,8 @@ int main(int argc, char** argv)
 	auto floorbuffer = pipe->CreateBuffer(bd, floor);
 
 	pipe->SetVertexBuffer(vbuffer, sizeof(Vertex), 0);
-	pipe->SetShaderBuffers(yasp::Shader::VERTEX, &wvpBuffer, 0, 1);
-	pipe->SetShaderBuffers(yasp::Shader::VERTEX, &worldBuffer, 1, 1);
+	pipe->SetShaderBuffers(yasp::ShaderType::VERTEX, &wvpBuffer, 0, 1);
+	pipe->SetShaderBuffers(yasp::ShaderType::VERTEX, &worldBuffer, 1, 1);
 	renderContext.SetTopology(yasp::Topology::TRIANGLE_STRIP);
 	renderContext.SetViewport({
 		0.0f,
@@ -184,7 +186,7 @@ int main(int argc, char** argv)
 	});
 
 	int imw, imh, imc;
-	auto imdata = stbi_load("floor.png", &imw, &imh, &imc, 4);
+	auto imdata = stbi_load("floor2.png", &imw, &imh, &imc, 4);
 
 	yasp::Texture2DDesc td;
 	td.arraySize = 1;
@@ -229,15 +231,15 @@ int main(int argc, char** argv)
 	
 	auto sampler = pipe->CreateSampler(samd);
 
-	pipe->SetShaderSamplers(yasp::Shader::PIXEL, &sampler, 0, 1);
-	pipe->SetShaderBuffers(yasp::Shader::PIXEL, &lightBuffer, 0, 1);
+	pipe->SetShaderSamplers(yasp::ShaderType::PIXEL, &sampler, 0, 1);
+	pipe->SetShaderBuffers(yasp::ShaderType::PIXEL, &lightBuffer, 0, 1);
 	
 
 	float speed = 3.0f;
 	float rotSpeed = 10.25f;
 
 	float lang = 0.0f;
-	pipe->SetShaderBuffers(yasp::Shader::PIXEL, &eyeposBuffer, 1, 1);
+	pipe->SetShaderBuffers(yasp::ShaderType::PIXEL, &eyeposBuffer, 1, 1);
 	
 	yasp::Timer timer;
 	float rot = 0;
@@ -305,7 +307,7 @@ int main(int argc, char** argv)
 		auto model = yasp::mat4::Identity();
 		view = yasp::mat4::LookToLH(pos, forward, up);
 		pipe->SetVertexBuffer(vbuffer, sizeof(Vertex), 0);
-		pipe->SetShaderTextureViews(yasp::Shader::PIXEL, &srv, 0, 1);
+		pipe->SetShaderTextureViews(yasp::ShaderType::PIXEL, &srv, 0, 1);
 		em.ForEach([&](yasp::Entity e, Pos& p, Velocity& v)
 		{
 			p += dt * v;
@@ -327,7 +329,7 @@ int main(int argc, char** argv)
 			}
 			model = yasp::mat4::Scale(0.2f, 0.2f, 0.2f) * yasp::mat4::Translation(p);
 			auto newmat = ~(model * view * projection);
-			wvpBuffer["Cocks"] = newmat;
+			wvpBuffer["Test"] = newmat;
 			wvpBuffer.Update();
 			//pipe->UpdateBuffer(wvpBuffer, &newmat, sizeof(newmat));
 			auto wmat = ~model;
@@ -344,7 +346,12 @@ int main(int argc, char** argv)
 		auto ident = yasp::mat4::Identity();
 		pipe->UpdateBuffer(wvpBuffer, &newmat, sizeof(newmat));
 		pipe->UpdateBuffer(worldBuffer, &ident, sizeof(ident));
-		pipe->SetShaderTextureViews(yasp::Shader::PIXEL, &srvFloor, 0, 1);
+		pipe->SetShaderTextureViews(yasp::ShaderType::PIXEL, &srvFloor, 0, 1);
+		pshader["albedo"] = srv;
+		pshader["samAnis"] = sampler;
+		pshader["EyePos"] = eyeposBuffer;
+		pshader["ObjectBuffer"] = lightBuffer;
+		pshader.Bind();
 		renderContext.Draw(4, 0);
 		renderContext.Display();
 	}

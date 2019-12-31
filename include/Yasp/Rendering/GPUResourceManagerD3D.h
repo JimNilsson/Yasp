@@ -5,10 +5,12 @@
 #include <Yasp/Rendering/IGPUResourceManager.h>
 #include <Yasp/Rendering/RenderContextD3D.h>
 #include <d3d11.h>
+#include <d3d11shader.h>
 #include <unordered_map>
 #include <Yasp/Rendering/IBuffer.h>
 #include <Yasp/Rendering/BufferD3D.h>
 #include <Yasp/Rendering/GPUBuffer.h>
+#include <Yasp/Rendering/ShaderD3D.h>
 
 namespace yasp
 {
@@ -19,8 +21,8 @@ namespace yasp
 		~GPUResourceManagerD3D();
 
 		GPUBuffer CreateBuffer(BufferDesc bufferDesc, void* initialData) override final;
-		GPUResourceID CreateVertexShader(const std::string& filename) override final;
-		GPUResourceID CreatePixelShader(const std::string& filename) override final;
+		Shader CreateVertexShader(const std::string& filename) override final;
+		Shader CreatePixelShader(const std::string& filename) override final;
 		GPUResourceID CreateRasterizer(RasterizerDesc rasterizerDesc) override final;
 		GPUResourceID CreateTexture2D(const Texture2DDesc& textureDesc, void* data = nullptr) override final;
 		GPUResourceID CreateTexture2DView(const Texture2DViewDesc& textureViewDesc, const GPUResourceID& texture) override final;
@@ -30,9 +32,9 @@ namespace yasp
 
 		void SetVertexBuffer(const GPUResourceID& id, uint32 stride, uint32 offset) override final;
 		void SetIndexBuffer(const GPUResourceID& id, IndexFormat format, uint32 offset) override final;
-		void SetShaderBuffers(Shader shader, GPUResourceID* buffers, uint32 startSlot, uint32 count) override final;
-		void SetShaderTextureViews(Shader shader, GPUResourceID* textureViews, uint32 startSlot, uint32 count) override final;
-		void SetShaderSamplers(Shader shader, GPUResourceID* samplers, uint32 startSlot, uint32 count) override final;
+		void SetShaderBuffers(ShaderType shader, GPUResourceID* buffers, uint32 startSlot, uint32 count) override final;
+		void SetShaderTextureViews(ShaderType shader, GPUResourceID* textureViews, uint32 startSlot, uint32 count) override final;
+		void SetShaderSamplers(ShaderType shader, GPUResourceID* samplers, uint32 startSlot, uint32 count) override final;
 		void SetVertexShader(const GPUResourceID& id) override final;
 		void SetGeometryShader(const GPUResourceID& id) override final;
 		void SetPixelShader(const GPUResourceID& id) override final;
@@ -41,7 +43,10 @@ namespace yasp
 
 
 	private:
-		void VertexShaderReflection(ID3DBlob* shaderByteCode);
+		void PixelShaderReflection(ID3D10Blob* shaderByteCode, ShaderD3D& shader);
+		void VertexShaderReflection(ID3DBlob* shaderByteCode, ShaderD3D& shader);
+		void RegisterResourceBindings(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection* reflection, ShaderD3D& shader);
+
 
 	private:
 		ID3D11Device* device;

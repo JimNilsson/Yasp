@@ -10,7 +10,11 @@ namespace yasp
 	protected:
 		uint32 uid;
 		int32* refCount;
+		void Increment() { if (refCount) (*refCount)++; }
+		void Decrement() { if (refCount) (*refCount)--; }
+		void Clean() { if (refCount && *refCount <= 0) delete refCount; }
 	public:
+		GPUResourceID() : uid(0), refCount(nullptr) {}
 		GPUResourceID(uint32 uid) : uid(uid) 
 		{
 			refCount = new int32(1);
@@ -18,26 +22,24 @@ namespace yasp
 		explicit operator int32() { return uid; }
 		virtual ~GPUResourceID()
 		{
-			(*refCount)--;
-			if (*refCount <= 0)
-				delete refCount;
+			Decrement();
+			Clean();
 		};
 		GPUResourceID(const GPUResourceID& other)
 		{
 			this->uid = other.uid;
 			this->refCount = other.refCount;
-			(*refCount)++;
+			Increment();
 		}
 		virtual GPUResourceID& operator=(const GPUResourceID& other)
 		{
 			if (this == &other)
 				return *this;
-			(*refCount)--;
-			if (refCount <= 0)
-				delete refCount;
+			Decrement();
+			Clean();
 			this->uid = other.uid;
 			this->refCount = other.refCount;
-			(*refCount)++;
+			Increment();
 			return *this;
 		}
 

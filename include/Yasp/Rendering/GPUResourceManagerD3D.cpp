@@ -37,7 +37,7 @@ const int32 textureFormatMap[] = {
 	(int32)DXGI_FORMAT_R8G8B8A8_SNORM,
 };
 
-yasp::GPUResourceManagerD3D::GPUResourceManagerD3D(RenderContextD3D * renderContext) : resourceCounter(0)
+yasp::GPUResourceManagerD3D::GPUResourceManagerD3D(RenderContextD3D * renderContext) : resourceCounter(1)
 {
 	this->device = renderContext->Device();
 	this->deviceContext = renderContext->DeviceContext();
@@ -135,7 +135,7 @@ yasp::GPUBuffer yasp::GPUResourceManagerD3D::CreateBuffer(BufferDesc bufferDesc,
 	return id;
 }
 
-yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreateVertexShader(const std::string & filename)
+yasp::Shader yasp::GPUResourceManagerD3D::CreateVertexShader(const std::string & filename)
 {
 	ID3DBlob* shaderCode = nullptr;
 	ID3DBlob* errors = nullptr;
@@ -154,14 +154,15 @@ yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreateVertexShader(const std::s
 	hr = device->CreateVertexShader(shaderCode->GetBufferPointer(), shaderCode->GetBufferSize(), nullptr, &vertexShader);
 
 	assert(SUCCEEDED(hr));
-	GPUResourceID id(resourceCounter++);
+	ShaderD3D* shader = new ShaderD3D(ShaderType::VERTEX, this);
+	Shader id(resourceCounter++, shader);
 	resourceMap[id] = { ResourceType::VERTEX_SHADER, vertexShader };
-	VertexShaderReflection(shaderCode);
+	VertexShaderReflection(shaderCode, *shader);
 	shaderCode->Release();
 	return id;
 }
 
-yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreatePixelShader(const std::string & filename)
+yasp::Shader yasp::GPUResourceManagerD3D::CreatePixelShader(const std::string & filename)
 {
 	ID3DBlob* shaderCode = nullptr;
 	ID3DBlob* errors = nullptr;
@@ -181,9 +182,13 @@ yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreatePixelShader(const std::st
 	ID3D11PixelShader* pixelShader;
 	hr = device->CreatePixelShader(shaderCode->GetBufferPointer(), shaderCode->GetBufferSize(), nullptr, &pixelShader);
 	assert(SUCCEEDED(hr));
-	shaderCode->Release();
-	GPUResourceID id(resourceCounter++);
+	
+	
+	ShaderD3D* shader = new ShaderD3D(ShaderType::PIXEL, this);
+	Shader id(resourceCounter++, shader);
 	resourceMap[id] = { ResourceType::PIXEL_SHADER, pixelShader };
+	PixelShaderReflection(shaderCode, *shader);
+	shaderCode->Release();
 	return id;
 }
 
@@ -381,7 +386,7 @@ void yasp::GPUResourceManagerD3D::SetIndexBuffer(const GPUResourceID & id, Index
 	}
 }
 
-void yasp::GPUResourceManagerD3D::SetShaderBuffers(Shader shader, GPUResourceID * buffers, uint32 startSlot, uint32 count)
+void yasp::GPUResourceManagerD3D::SetShaderBuffers(ShaderType shader, GPUResourceID * buffers, uint32 startSlot, uint32 count)
 {
 	std::vector<ID3D11Buffer*> d3dBuffers(count,nullptr);
 	for (uint32 i = 0; i < count; i++)
@@ -398,22 +403,22 @@ void yasp::GPUResourceManagerD3D::SetShaderBuffers(Shader shader, GPUResourceID 
 
 	switch (shader)
 	{
-	case Shader::VERTEX:
+	case ShaderType::VERTEX:
 		deviceContext->VSSetConstantBuffers(startSlot, count, d3dBuffers.data());
 		break;
-	case Shader::GEOMETRY:
+	case ShaderType::GEOMETRY:
 		deviceContext->GSSetConstantBuffers(startSlot, count, d3dBuffers.data());
 		break;
-	case Shader::PIXEL:
+	case ShaderType::PIXEL:
 		deviceContext->PSSetConstantBuffers(startSlot, count, d3dBuffers.data());
 		break;
-	case Shader::COMPUTE:
+	case ShaderType::COMPUTE:
 		deviceContext->CSSetConstantBuffers(startSlot, count, d3dBuffers.data());
 		break;
 	}
 }
 
-void yasp::GPUResourceManagerD3D::SetShaderTextureViews(Shader shader, GPUResourceID * textureViews, uint32 startSlot, uint32 count)
+void yasp::GPUResourceManagerD3D::SetShaderTextureViews(ShaderType shader, GPUResourceID * textureViews, uint32 startSlot, uint32 count)
 {
 	std::vector<ID3D11ShaderResourceView*> srvs(count, nullptr);
 	for (uint32 i = 0; i < count; i++)
@@ -430,22 +435,22 @@ void yasp::GPUResourceManagerD3D::SetShaderTextureViews(Shader shader, GPUResour
 
 	switch (shader)
 	{
-	case Shader::VERTEX:
+	case ShaderType::VERTEX:
 		deviceContext->VSSetShaderResources(startSlot, count, srvs.data());
 		break;
-	case Shader::GEOMETRY:
+	case ShaderType::GEOMETRY:
 		deviceContext->GSSetShaderResources(startSlot, count, srvs.data());
 		break;
-	case Shader::PIXEL:
+	case ShaderType::PIXEL:
 		deviceContext->PSSetShaderResources(startSlot, count, srvs.data());
 		break;
-	case Shader::COMPUTE:
+	case ShaderType::COMPUTE:
 		deviceContext->CSSetShaderResources(startSlot, count, srvs.data());
 		break;
 	}
 }
 
-void yasp::GPUResourceManagerD3D::SetShaderSamplers(Shader shader, GPUResourceID * samplers, uint32 startSlot, uint32 count)
+void yasp::GPUResourceManagerD3D::SetShaderSamplers(ShaderType shader, GPUResourceID * samplers, uint32 startSlot, uint32 count)
 {
 	std::vector<ID3D11SamplerState*> d3dsamplers(count, nullptr);
 	for (uint32 i = 0; i < count; i++)
@@ -462,16 +467,16 @@ void yasp::GPUResourceManagerD3D::SetShaderSamplers(Shader shader, GPUResourceID
 
 	switch (shader)
 	{
-	case Shader::VERTEX:
+	case ShaderType::VERTEX:
 		deviceContext->VSSetSamplers(startSlot, count, d3dsamplers.data());
 		break;
-	case Shader::GEOMETRY:
+	case ShaderType::GEOMETRY:
 		deviceContext->GSSetSamplers(startSlot, count, d3dsamplers.data());
 		break;
-	case Shader::PIXEL:
+	case ShaderType::PIXEL:
 		deviceContext->PSSetSamplers(startSlot, count, d3dsamplers.data());
 		break;
-	case Shader::COMPUTE:
+	case ShaderType::COMPUTE:
 		deviceContext->CSSetSamplers(startSlot, count, d3dsamplers.data());
 		break;
 	}
@@ -518,7 +523,19 @@ void yasp::GPUResourceManagerD3D::SetBlendState(const GPUResourceID & id, const 
 }
 
 
-void yasp::GPUResourceManagerD3D::VertexShaderReflection(ID3DBlob * shaderCode)
+void yasp::GPUResourceManagerD3D::PixelShaderReflection(ID3D10Blob * shaderByteCode, ShaderD3D & shader)
+{
+	ID3D11ShaderReflection* reflection;
+	HRESULT hr = D3DReflect(shaderByteCode->GetBufferPointer(), shaderByteCode->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&reflection);
+	assert(SUCCEEDED(hr));
+
+	D3D11_SHADER_DESC shaderDesc;
+	reflection->GetDesc(&shaderDesc);
+	RegisterResourceBindings(shaderDesc, reflection, shader);
+	reflection->Release();
+}
+
+void yasp::GPUResourceManagerD3D::VertexShaderReflection(ID3DBlob * shaderCode, ShaderD3D& shader)
 {
 	ID3D11ShaderReflection* reflection;
 	ID3D11InputLayout* inputLayout = nullptr;
@@ -598,5 +615,27 @@ void yasp::GPUResourceManagerD3D::VertexShaderReflection(ID3DBlob * shaderCode)
 	}
 	GPUResourceID id(resourceCounter++);
 	resourceMap[id] = { ResourceType::INPUT_LAYOUT, inputLayout };
+	RegisterResourceBindings(shaderDesc, reflection, shader);
 	reflection->Release();
+}
+
+void yasp::GPUResourceManagerD3D::RegisterResourceBindings(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection* reflection, ShaderD3D & shader)
+{
+	for (unsigned int i = 0; i < desc.BoundResources; i++)
+	{
+		D3D11_SHADER_INPUT_BIND_DESC sibd;
+		reflection->GetResourceBindingDesc(i, &sibd);
+		if (sibd.Type == D3D_SIT_CBUFFER)
+		{
+			shader.RegisterBinding(sibd.Name, ShaderResourceType::BUFFER, sibd.BindPoint);
+		}
+		if (sibd.Type == D3D_SIT_TEXTURE)
+		{
+			shader.RegisterBinding(sibd.Name, ShaderResourceType::TEXTURE, sibd.BindPoint);
+		}
+		if (sibd.Type == D3D_SIT_SAMPLER)
+		{
+			shader.RegisterBinding(sibd.Name, ShaderResourceType::SAMPLER, sibd.BindPoint);
+		}
+	}
 }

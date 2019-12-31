@@ -6,6 +6,7 @@
 #include <Yasp/Rendering/Descriptions.h>
 #include <Yasp/Rendering/IBuffer.h>
 #include <Yasp/Rendering/GPUBuffer.h>
+#include <Yasp/Rendering/Shader.h>
 #include <string>
 
 namespace yasp
@@ -16,8 +17,8 @@ namespace yasp
 		IGPUResourceManager() {};
 		virtual ~IGPUResourceManager() = 0 {};
 		virtual GPUBuffer CreateBuffer(BufferDesc bufferDesc, void* initialData) = 0;
-		virtual GPUResourceID CreateVertexShader(const std::string& filename) = 0;
-		virtual GPUResourceID CreatePixelShader(const std::string& filename) = 0;
+		virtual Shader CreateVertexShader(const std::string& filename) = 0;
+		virtual Shader CreatePixelShader(const std::string& filename) = 0;
 		virtual GPUResourceID CreateRasterizer(RasterizerDesc rasterizerDesc) = 0;
 		virtual GPUResourceID CreateTexture2D(const Texture2DDesc& textureDesc, void* data = nullptr) = 0;
 		virtual GPUResourceID CreateTexture2DView(const Texture2DViewDesc& textureViewDesc, const GPUResourceID& texture) = 0;
@@ -35,9 +36,9 @@ namespace yasp
 
 		virtual void SetVertexBuffer(const GPUResourceID& id, uint32 stride, uint32 offset) = 0;
 		virtual void SetIndexBuffer(const GPUResourceID& id, IndexFormat format, uint32 offset) = 0;
-		virtual void SetShaderBuffers(Shader shader, GPUResourceID* buffers, uint32 startSlot, uint32 count) = 0;
-		virtual void SetShaderTextureViews(Shader shader, GPUResourceID* textureViews, uint32 startSlot, uint32 count) = 0;
-		virtual void SetShaderSamplers(Shader shader, GPUResourceID* samplers, uint32 startSlot, uint32 count) = 0;
+		virtual void SetShaderBuffers(ShaderType shader, GPUResourceID* buffers, uint32 startSlot, uint32 count) = 0;
+		virtual void SetShaderTextureViews(ShaderType shader, GPUResourceID* textureViews, uint32 startSlot, uint32 count) = 0;
+		virtual void SetShaderSamplers(ShaderType shader, GPUResourceID* samplers, uint32 startSlot, uint32 count) = 0;
 		virtual void SetVertexShader(const GPUResourceID& id) = 0;
 		virtual void SetGeometryShader(const GPUResourceID& id) = 0;
 		virtual void SetPixelShader(const GPUResourceID& id) = 0;

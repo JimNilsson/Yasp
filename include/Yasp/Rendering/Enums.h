@@ -240,12 +240,19 @@ namespace yasp
 		BLEND_STATE
 	};
 
-	enum class Shader : int32
+	enum class ShaderType : int32
 	{
 		VERTEX,
 		GEOMETRY,
 		PIXEL,
 		COMPUTE
+	};
+
+	enum class ShaderResourceType : int32
+	{
+		TEXTURE,
+		BUFFER,
+		SAMPLER
 	};
 
 	enum class IndexFormat : int32
