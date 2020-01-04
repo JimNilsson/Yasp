@@ -3,12 +3,15 @@
 
 #include <Yasp/Rendering/IShader.h>
 #include <Yasp/Rendering/Descriptions.h>
+#include <Yasp/Rendering/BufferLayout.h>
 #include <string>
 #include <unordered_map>
+#include <variant>
 
 namespace yasp
 {
 	class GPUResourceManagerD3D;
+	class GPUBuffer;
 	class ShaderD3D : public yasp::IShader
 	{
 	public:
@@ -17,7 +20,10 @@ namespace yasp
 		AssignableResource operator[](const std::string& identifier) override final;
 		void SetResource(const std::string& identifier, const GPUResourceID& id) override final;
 		void Bind(const GPUResourceID&) override final;
+		GPUBuffer GetBuffer(const std::string& identifier) override final;
+
 		void RegisterBinding(const std::string& identifier, ShaderResourceType type, int32_t slot);
+		void RegisterBuffer(const std::string& identifier, GPUBuffer buffer, int32_t slot);
 	private:
 		
 		struct ShaderResourceBinding
@@ -26,7 +32,9 @@ namespace yasp
 			int32_t slot;
 			GPUResourceID resource;
 		};
+
 		std::unordered_map<std::string, ShaderResourceBinding> shaderResources;
+		std::unordered_map<std::string, GPUBuffer> shaderBuffers;
 		GPUResourceManagerD3D* resourceManager;
 	};
 }

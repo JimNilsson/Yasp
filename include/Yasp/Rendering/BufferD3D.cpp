@@ -31,6 +31,7 @@ yasp::BufferD3D& yasp::BufferD3D::operator=(const BufferD3D & other)
 	IBuffer::operator=(other);
 	this->data = other.data;
 	this->size = other.size;
+	this->dataPoints = other.dataPoints;
 	return *this;
 }
 
@@ -46,4 +47,9 @@ yasp::AssignableMemory yasp::BufferD3D::operator[](const std::string & identifie
 void yasp::BufferD3D::Update(const GPUResourceID& id)
 {
 	resourceManager->UpdateBuffer(id, data, size);
+}
+
+void yasp::BufferD3D::RegisterProperty(const std::string & identifier, int32_t size, int32_t offset)
+{
+	dataPoints[identifier] = { size, offset };
 }

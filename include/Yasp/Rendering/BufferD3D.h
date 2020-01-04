@@ -18,12 +18,14 @@ namespace yasp
 		BufferD3D& operator=(const BufferD3D& other);
 		AssignableMemory operator[](const std::string& identifier) override final;
 		void Update(const GPUResourceID& id) override final;
+
+		void RegisterProperty(const std::string& identifier, int32_t size, int32_t offset);
 	
 	private: 
 		struct SizeOffset
 		{
-			size_t size;
-			size_t offset;
+			int32_t size;
+			int32_t offset;
 		};
 		void* data;
 		size_t size;

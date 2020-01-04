@@ -7,6 +7,7 @@
 namespace yasp
 {
 	class AssignableResource;
+	class GPUBuffer;
 	class IShader
 	{
 	public:
@@ -15,6 +16,8 @@ namespace yasp
 		virtual AssignableResource operator[](const std::string&) = 0;
 		virtual void SetResource(const std::string& identifier, const GPUResourceID& id) = 0;
 		virtual void Bind(const GPUResourceID&) = 0;
+		virtual GPUBuffer GetBuffer(const std::string& identifier) = 0;
+
 	protected:
 		ShaderType type;
 	};

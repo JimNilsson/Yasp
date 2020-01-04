@@ -2,6 +2,8 @@
 #define YASP_ASSIGNABLE_RESOURCE
 
 #include <Yasp/Rendering/IShader.h>
+#include <Yasp/Rendering/GPUBuffer.h>
+#include <Yasp/Rendering/AssignableMemory.h>
 #include <string>
 
 namespace yasp
@@ -15,6 +17,16 @@ namespace yasp
 		{
 			shader->SetResource(identifier, other);
 		}
+		AssignableMemory operator[](const std::string& var)
+		{
+			return shader->GetBuffer(identifier)[var];
+		}
+		void Update()
+		{
+			shader->GetBuffer(identifier).Update();
+		}
+
+
 	private:
 		IShader* shader;
 		std::string identifier;

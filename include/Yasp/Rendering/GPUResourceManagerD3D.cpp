@@ -86,11 +86,11 @@ yasp::GPUResourceManagerD3D::~GPUResourceManagerD3D()
 			r.second.texture2D->Release();
 			break;
 		}
-		
+		delete[] r.second.resourceData;
 	}
 }
 
-yasp::GPUBuffer yasp::GPUResourceManagerD3D::CreateBuffer(BufferDesc bufferDesc, void * initialData)
+ID3D11Buffer * yasp::GPUResourceManagerD3D::CreateInternalBuffer(const BufferDesc & bufferDesc, void * initialData)
 {
 	D3D11_BUFFER_DESC bd = {};
 	bd.ByteWidth = bufferDesc.size;
@@ -125,13 +125,17 @@ yasp::GPUBuffer yasp::GPUResourceManagerD3D::CreateBuffer(BufferDesc bufferDesc,
 
 	ID3D11Buffer* buffer;
 
-	HRESULT hr = device->CreateBuffer(&bd, &sd, &buffer);
+	HRESULT hr = device->CreateBuffer(&bd, initialData ? &sd : nullptr, &buffer);
 	assert(SUCCEEDED(hr));
+	return buffer;
+}
 
-	//GPUBuffer id(resourceCounter++, this)
-	BufferD3D* baffer = new BufferD3D(this, bufferDesc.size, initialData);
-	GPUBuffer id(resourceCounter++, baffer);
-	resourceMap[id] = { ResourceType::BUFFER, buffer };
+yasp::GPUBuffer yasp::GPUResourceManagerD3D::CreateBuffer(const BufferDesc& bufferDesc, void * initialData)
+{
+	auto buffer = CreateInternalBuffer(bufferDesc, initialData);
+	void* bufferData = new uint8_t[bufferDesc.size];
+	GPUBuffer id(resourceCounter++, this);
+	resourceMap[id] = { ResourceType::BUFFER, buffer, bufferData, static_cast<size_t>(bufferDesc.size) };
 	return id;
 }
 
@@ -370,6 +374,30 @@ void yasp::GPUResourceManagerD3D::UpdateBuffer(const GPUResourceID& id, void * d
 	}
 }
 
+void yasp::GPUResourceManagerD3D::UpdateBuffer(const GPUResourceID & id)
+{
+	if (auto f = resourceMap.find(id); f != resourceMap.end())
+	{
+		D3D11_MAPPED_SUBRESOURCE ms;
+		deviceContext->Map(f->second.buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
+		memcpy(ms.pData, f->second.resourceData, f->second.resourceDataSize);
+		deviceContext->Unmap(f->second.buffer, 0);
+	}
+}
+
+yasp::AssignableMemory yasp::GPUResourceManagerD3D::GetBufferSegment(const GPUResourceID & id, const std::string & identifier)
+{
+	if (auto f = resourceMap.find(id); f != resourceMap.end())
+	{
+		if (auto g = f->second.namedOffsets.find(identifier); g != f->second.namedOffsets.end())
+		{
+			return AssignableMemory(static_cast<uint8_t*>(f->second.resourceData) + g->second.offset, g->second.size);
+		}
+		return AssignableMemory(f->second.resourceData, f->second.resourceDataSize);
+	}
+	return AssignableMemory();
+}
+
 void yasp::GPUResourceManagerD3D::SetVertexBuffer(const GPUResourceID& id, uint32 stride, uint32 offset)
 {
 	if (auto f = resourceMap.find(id); f != resourceMap.end())
@@ -522,8 +550,7 @@ void yasp::GPUResourceManagerD3D::SetBlendState(const GPUResourceID & id, const 
 	}
 }
 
-
-void yasp::GPUResourceManagerD3D::PixelShaderReflection(ID3D10Blob * shaderByteCode, ShaderD3D & shader)
+void yasp::GPUResourceManagerD3D::PixelShaderReflection(ID3DBlob * shaderByteCode, ShaderD3D & shader)
 {
 	ID3D11ShaderReflection* reflection;
 	HRESULT hr = D3DReflect(shaderByteCode->GetBufferPointer(), shaderByteCode->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&reflection);
@@ -626,8 +653,28 @@ void yasp::GPUResourceManagerD3D::RegisterResourceBindings(const D3D11_SHADER_DE
 		D3D11_SHADER_INPUT_BIND_DESC sibd;
 		reflection->GetResourceBindingDesc(i, &sibd);
 		if (sibd.Type == D3D_SIT_CBUFFER)
-		{
-			shader.RegisterBinding(sibd.Name, ShaderResourceType::BUFFER, sibd.BindPoint);
+		{			
+			ID3D11ShaderReflectionConstantBuffer* cb = reflection->GetConstantBufferByName(sibd.Name);
+			D3D11_SHADER_BUFFER_DESC sbd;
+			cb->GetDesc(&sbd);
+			BufferDesc bd;
+			bd.bind = BufferBinding::BIND_SHADER_BUFFER;
+			bd.size = sbd.Size;
+			bd.byteStride = 0;
+			bd.usage = Usage::GPU_READ_CPU_WRITE;
+			auto buffer = CreateInternalBuffer(bd, nullptr);
+			GPUBuffer id(resourceCounter++, this);
+			void* bufferData = new uint8_t[bd.size];
+
+			resourceMap[id] = { ResourceType::BUFFER, buffer, bufferData, static_cast<size_t>(bd.size) };
+			for (unsigned int j = 0; j < sbd.Variables; j++)
+			{
+				ID3D11ShaderReflectionVariable* var = cb->GetVariableByIndex(j);
+				D3D11_SHADER_VARIABLE_DESC svd;
+				var->GetDesc(&svd);
+				RegisterProperty(id, svd.Name, svd.Size, svd.StartOffset);
+			}
+			shader.RegisterBuffer(sibd.Name, id, sibd.BindPoint);
 		}
 		if (sibd.Type == D3D_SIT_TEXTURE)
 		{
@@ -637,5 +684,13 @@ void yasp::GPUResourceManagerD3D::RegisterResourceBindings(const D3D11_SHADER_DE
 		{
 			shader.RegisterBinding(sibd.Name, ShaderResourceType::SAMPLER, sibd.BindPoint);
 		}
+	}
+}
+
+void yasp::GPUResourceManagerD3D::RegisterProperty(const GPUResourceID & id, const std::string & name, int32_t size, int32_t offset)
+{
+	if (auto f = resourceMap.find(id); f != resourceMap.end())
+	{
+		f->second.namedOffsets[name] = { size, offset };
 	}
 }

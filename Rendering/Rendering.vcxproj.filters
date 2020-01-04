@@ -36,8 +36,8 @@
     <ClCompile Include="..\src\Rendering\ShaderD3D.cpp">
       <Filter>Source Files\D3D</Filter>
     </ClCompile>
-    <ClCompile Include="..\include\Yasp\Rendering\BufferD3D.cpp">
-      <Filter>Source Files\D3D</Filter>
+    <ClCompile Include="..\src\Rendering\GPUBuffer.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -71,14 +71,8 @@
     <ClInclude Include="..\include\Yasp\Rendering\ShaderD3D.h">
       <Filter>Header Files\D3D</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\Yasp\Rendering\IBuffer.h">
-      <Filter>Header Files\Interfaces</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\Yasp\Rendering\AssignableMemory.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\include\Yasp\Rendering\BufferD3D.h">
-      <Filter>Header Files\D3D</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Yasp\Rendering\GPUBuffer.h">
       <Filter>Header Files</Filter>
@@ -87,6 +81,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Yasp\Rendering\AssignableResource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Yasp\Rendering\BufferLayout.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

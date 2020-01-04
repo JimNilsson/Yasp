@@ -33,6 +33,7 @@ namespace yasp
 		{
 			shader->Bind(*this);
 		}
+
 	private:
 		IShader* shader;
 	};

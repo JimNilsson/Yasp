@@ -45,7 +45,7 @@ class A {
 public:
 	A() {}
 	virtual ~A() {}
-	virtual int operator[](size_t) = 0;
+	virtual int operator[](size_t) { return 2; };
 };
 
 class B : public A
@@ -56,6 +56,14 @@ public:
 	int operator[](size_t a) override final { return a; }
 };
 
+struct C
+{
+	C(int a) : c(a) {}
+	int operator()(const C& self) { return self.c; }
+	std::string operator[](const std::string& s) { return "Anus"; }
+	int c;
+};
+
 
 #include <unordered_map>
 
@@ -63,6 +71,9 @@ public:
 #include <Yasp/stb_image.h>
 int main(int argc, char** argv)
 {
+	A a;
+	B b;
+	A c = b;
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	yasp::EntityManager em;
 	yasp::float3 pos = { 0, 0, 0 };
@@ -74,13 +85,7 @@ int main(int argc, char** argv)
 	yasp::Entity e4 = em.Create();
 	yasp::Entity e5 = em.Create();
 	std::cout << e1 << ", " << e2 << ", " << e3 << ", " << e4 << std::endl;
-	int a = 4;
-	int b = 5;
-	int c = 3;
-	auto s = std::tuple<int&, int&>(a, b);
-	//em.ForEach([&](yasp::Entity e, Pos& p, Velocity& v, int s) -> void {});
-	auto& d = std::get<1>(s);
-	d = 5;
+
 	em.Register(e1, Pos({ 1.0f, 2.0f, 3.0 }), Velocity({ 0.0f, 1.0f, 0.0f }));
 	em.Register(e2, Pos({ 0.0f, 0.0f, 3.0 }), Velocity({ 1.0f, 0.0f, 0.0f }));
 	em.Register(e3, Pos({ 0.0f, 0.0f, 3.0 }), Velocity({ 0.0f, 0.0f, 1.0f }));
@@ -116,8 +121,7 @@ int main(int argc, char** argv)
 	auto pipe = renderContext.ResourceManager();
 	auto vshader = pipe->CreateVertexShader("SimpleVS.hlsl");
 	auto pshader = pipe->CreatePixelShader("SimplePS.hlsl");
-	
-	
+	//
 
 	auto rasterizer = pipe->CreateRasterizer({
 		yasp::FillMode::SOLID,
@@ -163,10 +167,10 @@ int main(int argc, char** argv)
 	auto vbuffer = pipe->CreateBuffer(bd, positions);
 
 	Vertex floor[4] = {
-		Vertex({ yasp::float3(-5.5f, 0.0f, -5.5f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(0.0f, 0.0f) }),
-		Vertex({ yasp::float3(-5.5f, 0.0f, 5.5f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(10.0f, 0.0f) }),
-		Vertex({ yasp::float3(5.5f, 0.0f, -5.5f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(0.0f, 10.0f) }),
-		Vertex({ yasp::float3(5.5f, 0.0f, 5.5f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(10.0f, 10.0f) })
+		Vertex({ yasp::float3(-15.5f, 0.0f, -15.5f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(0.0f, 0.0f) }),
+		Vertex({ yasp::float3(-15.5f, 0.0f, 15.5f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(30.0f, 0.0f) }),
+		Vertex({ yasp::float3(15.5f, 0.0f, -15.5f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(0.0f, 30.0f) }),
+		Vertex({ yasp::float3(15.5f, 0.0f, 15.5f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(30.0f, 30.0f) })
 	};
 
 	bd.size = 4 * sizeof(Vertex);
@@ -232,14 +236,14 @@ int main(int argc, char** argv)
 	auto sampler = pipe->CreateSampler(samd);
 
 	pipe->SetShaderSamplers(yasp::ShaderType::PIXEL, &sampler, 0, 1);
-	pipe->SetShaderBuffers(yasp::ShaderType::PIXEL, &lightBuffer, 0, 1);
+	//pipe->SetShaderBuffers(yasp::ShaderType::PIXEL, &lightBuffer, 0, 1);
 	
 
 	float speed = 3.0f;
 	float rotSpeed = 10.25f;
 
 	float lang = 0.0f;
-	pipe->SetShaderBuffers(yasp::ShaderType::PIXEL, &eyeposBuffer, 1, 1);
+	//pipe->SetShaderBuffers(yasp::ShaderType::PIXEL, &eyeposBuffer, 1, 1);
 	
 	yasp::Timer timer;
 	float rot = 0;
@@ -299,9 +303,11 @@ int main(int argc, char** argv)
 		pl.x = 3 * cos(lang);
 		pl.z = 3 * sin(lang);
 
-		pipe->UpdateBuffer(lightBuffer, &pl, sizeof(pl));
-		ppos = yasp::float4(pos.xyz, 1.0f);
-		pipe->UpdateBuffer(eyeposBuffer, &ppos, sizeof(ppos));
+		pshader["ObjectBuffer"]["pointlight"] = pl;
+		pshader["ObjectBuffer"].Update();
+		eyeposBuffer["eyepos"] = yasp::float4(pos.xyz, 1.0f);
+		eyeposBuffer.Update();
+		
 
 		renderContext.Clear();
 		auto model = yasp::mat4::Identity();
@@ -350,7 +356,7 @@ int main(int argc, char** argv)
 		pshader["albedo"] = srv;
 		pshader["samAnis"] = sampler;
 		pshader["EyePos"] = eyeposBuffer;
-		pshader["ObjectBuffer"] = lightBuffer;
+		//pshader["ObjectBuffer"] = lightBuffer;
 		pshader.Bind();
 		renderContext.Draw(4, 0);
 		renderContext.Display();

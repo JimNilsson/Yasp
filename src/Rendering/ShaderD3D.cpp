@@ -1,6 +1,9 @@
 #include <Yasp/Rendering/ShaderD3D.h>
 #include <Yasp/Rendering/AssignableResource.h>
 #include <Yasp/Rendering/GPUResourceManagerD3D.h>
+#include <Yasp/Rendering/Descriptions.h>
+#include <Yasp/Rendering/Enums.h>
+#include <Yasp/Rendering/GPUBuffer.h>
 
 yasp::AssignableResource yasp::ShaderD3D::operator[](const std::string & identifier)
 {
@@ -33,6 +36,7 @@ void yasp::ShaderD3D::Bind(const GPUResourceID& id)
 		}
 	}
 
+
 	switch (this->type)
 	{
 	case ShaderType::VERTEX:
@@ -51,7 +55,22 @@ void yasp::ShaderD3D::Bind(const GPUResourceID& id)
 
 }
 
+yasp::GPUBuffer yasp::ShaderD3D::GetBuffer(const std::string & identifier)
+{
+	if (auto f = shaderBuffers.find(identifier); f != shaderBuffers.end())
+	{
+		return f->second;
+	}
+	return GPUBuffer();
+}
+
 void yasp::ShaderD3D::RegisterBinding(const std::string& identifier, ShaderResourceType type, int32_t slot)
 {
-	shaderResources[identifier] = { type, slot, GPUResourceID() };
+	shaderResources[identifier] = { type, slot, GPUResourceID()};
+}
+
+void yasp::ShaderD3D::RegisterBuffer(const std::string & identifier, GPUBuffer buffer, int32_t slot)
+{
+	shaderBuffers[identifier] = buffer;
+	shaderResources[identifier] = { ShaderResourceType::BUFFER, slot, buffer };
 }

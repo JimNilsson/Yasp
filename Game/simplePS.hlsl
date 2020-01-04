@@ -38,7 +38,7 @@ float4 main( VS_OUT input ) : SV_TARGET
 		float3 V = normalize(eyepos.xyz - input.wpos.xyz);
 		float3 H = normalize(light + V);
 		
-		float power = pow(abs(dot(input.nor, H)), 16.0f);
+		float power = pow(abs(dot(input.nor, H)), 6.0f);
 		if(power > 0.0f)
 		{
 			specularContribution = power * ndl;

@@ -7,10 +7,10 @@
 #include <d3d11.h>
 #include <d3d11shader.h>
 #include <unordered_map>
-#include <Yasp/Rendering/IBuffer.h>
-#include <Yasp/Rendering/BufferD3D.h>
 #include <Yasp/Rendering/GPUBuffer.h>
 #include <Yasp/Rendering/ShaderD3D.h>
+#include <Yasp/Rendering/Shader.h>
+#include <Yasp/Rendering/AssignableMemory.h>
 
 namespace yasp
 {
@@ -20,7 +20,7 @@ namespace yasp
 		GPUResourceManagerD3D(RenderContextD3D* renderContext);
 		~GPUResourceManagerD3D();
 
-		GPUBuffer CreateBuffer(BufferDesc bufferDesc, void* initialData) override final;
+		GPUBuffer CreateBuffer(const BufferDesc& bufferDesc, void* initialData) override final;
 		Shader CreateVertexShader(const std::string& filename) override final;
 		Shader CreatePixelShader(const std::string& filename) override final;
 		GPUResourceID CreateRasterizer(RasterizerDesc rasterizerDesc) override final;
@@ -29,6 +29,8 @@ namespace yasp
 		GPUResourceID CreateSampler(const SamplerDesc& samplerDesc) override final;
 
 		void UpdateBuffer(const GPUResourceID& id, void* data, uint32 size) override final;
+		void UpdateBuffer(const GPUResourceID& id) override final;
+		AssignableMemory GetBufferSegment(const GPUResourceID& id, const std::string& identifier) override final;
 
 		void SetVertexBuffer(const GPUResourceID& id, uint32 stride, uint32 offset) override final;
 		void SetIndexBuffer(const GPUResourceID& id, IndexFormat format, uint32 offset) override final;
@@ -43,14 +45,20 @@ namespace yasp
 
 
 	private:
-		void PixelShaderReflection(ID3D10Blob* shaderByteCode, ShaderD3D& shader);
+		ID3D11Buffer * CreateInternalBuffer(const BufferDesc& bufferDesc, void* initialData);
+		void PixelShaderReflection(ID3DBlob* shaderByteCode, ShaderD3D& shader);
 		void VertexShaderReflection(ID3DBlob* shaderByteCode, ShaderD3D& shader);
 		void RegisterResourceBindings(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection* reflection, ShaderD3D& shader);
-
+		void RegisterProperty(const GPUResourceID& id, const std::string& name, int32_t size, int32_t offset);
 
 	private:
 		ID3D11Device* device;
 		ID3D11DeviceContext* deviceContext;
+		struct SizeOffset
+		{
+			int32_t size;
+			int32_t offset;
+		};
 		struct GPUResourceD3D
 		{
 			ResourceType type;
@@ -72,7 +80,9 @@ namespace yasp
 				ID3D11InputLayout* inputLayout;
 				ID3D11SamplerState* sampler;
 			};
-			
+			void* resourceData = nullptr;
+			size_t resourceDataSize = 0;
+			std::unordered_map<std::string, SizeOffset> namedOffsets;
 		};
 		uint32 resourceCounter;
 		std::unordered_map<GPUResourceID, GPUResourceD3D, GPUResourceID::Hasher> resourceMap;
