@@ -14,15 +14,15 @@
 yasp::float3 randvec()
 {
 	float r = (rand() % 100) / 100.0f;
-	if (r < 0.5)
-	{
-		return { 1.0f, 0.0f, 0.0f };
-	}
-	return { 0.0f, 1.0f, 0.0f };
+	//if (r < 0.5)
+	//{
+	//	return { 1.0f, 0.0f, 0.0f };
+	//}
+	//return { 0.0f, 1.0f, 0.0f };
 	float x = (rand() % 100) / 100.0f;
 	float y = (rand() % 100) / 100.0f;
-	float z = 0.0f;// (rand() % 100) / 100.0f;
-	return { x,y,z };
+	float z = (rand() % 100) / 100.0f;
+	return normalize(yasp::float3(x, y, z));
 }
 
 #include <functional>
@@ -60,7 +60,7 @@ struct C
 {
 	C(int a) : c(a) {}
 	int operator()(const C& self) { return self.c; }
-	std::string operator[](const std::string& s) { return "Anus"; }
+	std::string operator[](const std::string& s) { return "asdf"; }
 	int c;
 };
 
@@ -90,6 +90,13 @@ int main(int argc, char** argv)
 	em.Register(e2, Pos({ 0.0f, 0.0f, 3.0 }), Velocity({ 1.0f, 0.0f, 0.0f }));
 	em.Register(e3, Pos({ 0.0f, 0.0f, 3.0 }), Velocity({ 0.0f, 0.0f, 1.0f }));
 	em.Register(e4, Pos({ 0.0f, 0.0f, 3.0 }), Velocity({ 0.5f, 0.5f, 0.0f }));
+
+	//for (int i = 0; i < 100; i++)
+	//{
+	//	auto ent = em.Create();
+	//	auto p = randvec().xyz * 2.0f;
+	//	em.Register(ent, Pos(p.x, p.y, p.z), Velocity({ 1.0f, 0.0f, 0.0f }));
+	//}
 	
 
 
@@ -106,17 +113,21 @@ int main(int argc, char** argv)
 	auto projection = yasp::mat4::PerspectiveLH(yasp::PI<float> / 4, 1280.0f / 720.0f, 0.1f, 50.0f);
 	yasp::mat4 matrix = ~(view * projection);
 
-	
-	auto wvpBuffer = renderContext.ResourceManager()->CreateBuffer(bd, &matrix);
-	auto worldBuffer = renderContext.ResourceManager()->CreateBuffer(bd, &matrix);
-	bd.size = sizeof(PointLight);
 	PointLight pl = { 0.0f, 2.5f, 0.0f, 10.0f };
-	auto lightBuffer = renderContext.ResourceManager()->CreateBuffer(bd, &pl);
 
-	yasp::float4 ppos = { pos.xyz, 1.0f };
-	bd.size = sizeof(yasp::float4);
-	auto eyeposBuffer = renderContext.ResourceManager()->CreateBuffer(bd, &ppos);
-	
+	struct PointLights {
+		yasp::vec4<uint32_t> pointlightCount;
+		PointLight pointlights[16];
+	};
+	PointLights pls;
+	pls.pointlightCount.x = 4;
+	for (auto& pl : pls.pointlights)
+	{
+		auto p = randvec() * 25.0f;
+		p.y = 2.5f;
+		pl = PointLight(p.x, p.y, p.z, 2.0f);
+	}
+
 
 	auto pipe = renderContext.ResourceManager();
 	auto vshader = pipe->CreateVertexShader("SimpleVS.hlsl");
@@ -129,9 +140,8 @@ int main(int argc, char** argv)
 		yasp::WindingOrder::CLOCKWISE
 	});
 
-	
-	pipe->SetVertexShader(vshader);
-	pipe->SetPixelShader(pshader);
+	vshader.Bind();
+	pshader.Bind();
 	pipe->SetRasterizer(rasterizer);
 
 
@@ -177,8 +187,7 @@ int main(int argc, char** argv)
 	auto floorbuffer = pipe->CreateBuffer(bd, floor);
 
 	pipe->SetVertexBuffer(vbuffer, sizeof(Vertex), 0);
-	pipe->SetShaderBuffers(yasp::ShaderType::VERTEX, &wvpBuffer, 0, 1);
-	pipe->SetShaderBuffers(yasp::ShaderType::VERTEX, &worldBuffer, 1, 1);
+
 	renderContext.SetTopology(yasp::Topology::TRIANGLE_STRIP);
 	renderContext.SetViewport({
 		0.0f,
@@ -236,15 +245,14 @@ int main(int argc, char** argv)
 	auto sampler = pipe->CreateSampler(samd);
 
 	pipe->SetShaderSamplers(yasp::ShaderType::PIXEL, &sampler, 0, 1);
-	//pipe->SetShaderBuffers(yasp::ShaderType::PIXEL, &lightBuffer, 0, 1);
+	pshader["albedo"] = srv;
+	pshader["samAnis"] = sampler;
 	
 
 	float speed = 3.0f;
-	float rotSpeed = 10.25f;
-
+	float rotSpeed = 2.25f;
 	float lang = 0.0f;
-	//pipe->SetShaderBuffers(yasp::ShaderType::PIXEL, &eyeposBuffer, 1, 1);
-	
+
 	yasp::Timer timer;
 	float rot = 0;
 	float accTime = 0.0f;
@@ -300,14 +308,18 @@ int main(int argc, char** argv)
 
 		lang += dt;
 		
-		pl.x = 3 * cos(lang);
-		pl.z = 3 * sin(lang);
+		pl.x = 6 * cos(lang);
+		pl.z = 6 * sin(lang);
+		pls.pointlights[0] = pl;
 
 		pshader["ObjectBuffer"]["pointlight"] = pl;
 		pshader["ObjectBuffer"].Update();
-		eyeposBuffer["eyepos"] = yasp::float4(pos.xyz, 1.0f);
-		eyeposBuffer.Update();
-		
+		pshader["PointLights"]["ALLOFIT"] = pls;
+		pshader["PointLights"]["pointlights"][1] = PointLight({ 0.0f, 1.0f, 0.0f, 5.0f });
+		pshader["PointLights"].Update();
+		pshader["EyePos"]["eyepos"] = yasp::float4(pos.xyz, 1.0f);
+		pshader["EyePos"].Update();
+		pshader.Bind();
 
 		renderContext.Clear();
 		auto model = yasp::mat4::Identity();
@@ -330,16 +342,14 @@ int main(int argc, char** argv)
 					auto tangential = yasp::cross(dir, { 0, 1, 0});
 					v.xyz = tangential.xyz * 5;
 				}
-				
-				//v.xyz = randvec().xyz;
 			}
 			model = yasp::mat4::Scale(0.2f, 0.2f, 0.2f) * yasp::mat4::Translation(p);
 			auto newmat = ~(model * view * projection);
-			wvpBuffer["Test"] = newmat;
-			wvpBuffer.Update();
-			//pipe->UpdateBuffer(wvpBuffer, &newmat, sizeof(newmat));
-			auto wmat = ~model;
-			pipe->UpdateBuffer(worldBuffer, &wmat, sizeof(wmat));
+
+			vshader["WorldBuffer"]["gWorld"] = ~model;
+			vshader["WorldBuffer"].Update();
+			vshader["ObjectBuffer"]["gWVP"] = newmat;
+			vshader["ObjectBuffer"].Update();
 			renderContext.Draw(14, 0);
 		});
 		if (accTime > 0.0f)
@@ -350,12 +360,12 @@ int main(int argc, char** argv)
 		auto floorMVP =  view * projection;
 		auto newmat = ~(floorMVP);
 		auto ident = yasp::mat4::Identity();
-		pipe->UpdateBuffer(wvpBuffer, &newmat, sizeof(newmat));
-		pipe->UpdateBuffer(worldBuffer, &ident, sizeof(ident));
+		vshader["ObjectBuffer"]["gWVP"] = newmat;
+		vshader["ObjectBuffer"].Update();
+		vshader["WorldBuffer"]["gWorld"] = ident;
+		vshader["WorldBuffer"].Update();
 		pipe->SetShaderTextureViews(yasp::ShaderType::PIXEL, &srvFloor, 0, 1);
-		pshader["albedo"] = srv;
-		pshader["samAnis"] = sampler;
-		pshader["EyePos"] = eyeposBuffer;
+
 		//pshader["ObjectBuffer"] = lightBuffer;
 		pshader.Bind();
 		renderContext.Draw(4, 0);
