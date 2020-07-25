@@ -138,11 +138,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\Yasp\EntityComponent\ComponentContainer.h" />
     <ClInclude Include="..\include\Yasp\EntityComponent\Entity.h" />
     <ClInclude Include="..\include\Yasp\EntityComponent\EntityManager.h" />
     <ClInclude Include="..\include\Yasp\EntityComponent\Pool.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\EntityComponent\ComponentContainer.cpp" />
     <ClCompile Include="..\src\EntityComponent\Entity.cpp" />
     <ClCompile Include="..\src\EntityComponent\EntityManager.cpp" />
   </ItemGroup>

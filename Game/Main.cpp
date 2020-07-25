@@ -10,6 +10,7 @@
 #include <vector>
 #include <Yasp/EntityComponent/Pool.h>
 #include <utility>
+#include <tuple>
 
 yasp::float3 randvec()
 {
@@ -41,39 +42,14 @@ struct PointLight : public yasp::float4
 	using yasp::float4::float4;
 };
 
-class A {
-public:
-	A() {}
-	virtual ~A() {}
-	virtual int operator[](size_t) { return 2; };
-};
 
-class B : public A
-{
-public:
-	B() : A() {}
-	~B() {}
-	int operator[](size_t a) override final { return a; }
-};
-
-struct C
-{
-	C(int a) : c(a) {}
-	int operator()(const C& self) { return self.c; }
-	std::string operator[](const std::string& s) { return "asdf"; }
-	int c;
-};
-
-
+#include <Yasp/Rendering/AssignableMemory.h>
 #include <unordered_map>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <Yasp/stb_image.h>
 int main(int argc, char** argv)
 {
-	A a;
-	B b;
-	A c = b;
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	yasp::EntityManager em;
 	yasp::float3 pos = { 0, 0, 0 };
@@ -91,12 +67,12 @@ int main(int argc, char** argv)
 	em.Register(e3, Pos({ 0.0f, 0.0f, 3.0 }), Velocity({ 0.0f, 0.0f, 1.0f }));
 	em.Register(e4, Pos({ 0.0f, 0.0f, 3.0 }), Velocity({ 0.5f, 0.5f, 0.0f }));
 
-	//for (int i = 0; i < 100; i++)
-	//{
-	//	auto ent = em.Create();
-	//	auto p = randvec().xyz * 2.0f;
-	//	em.Register(ent, Pos(p.x, p.y, p.z), Velocity({ 1.0f, 0.0f, 0.0f }));
-	//}
+	for (int i = 0; i < 500; i++)
+	{
+		auto ent = em.Create();
+		auto p = randvec().xyz * 2.0f;
+		em.Register(ent, Pos(p.x, p.y, p.z), Velocity({ 1.0f, 0.0f, 0.0f }));
+	}
 	
 
 
@@ -329,20 +305,19 @@ int main(int argc, char** argv)
 		em.ForEach([&](yasp::Entity e, Pos& p, Velocity& v)
 		{
 			p += dt * v;
-			if (accTime > 0.0f)
+
+			auto dir = yasp::normalize(pos - p);
+			auto dist = yasp::length(pos - p);
+			if(dist > 3.0f)
 			{
-				auto dir = yasp::normalize(pos - p);
-				auto dist = yasp::length(pos - p);
-				if(dist > 3.0f)
-				{
-					v.xyz = dir.xyz;
-				}
-				else
-				{
-					auto tangential = yasp::cross(dir, { 0, 1, 0});
-					v.xyz = tangential.xyz * 5;
-				}
+				v.xyz = dir.xyz;
 			}
+			else
+			{
+				auto tangential = yasp::cross(dir, { 0, 1, 0});
+				v.xyz = tangential.xyz * 5;
+			}
+
 			model = yasp::mat4::Scale(0.2f, 0.2f, 0.2f) * yasp::mat4::Translation(p);
 			auto newmat = ~(model * view * projection);
 
@@ -352,10 +327,7 @@ int main(int argc, char** argv)
 			vshader["ObjectBuffer"].Update();
 			renderContext.Draw(14, 0);
 		});
-		if (accTime > 0.0f)
-		{
-			accTime = 0.0f;
-		}
+
 		pipe->SetVertexBuffer(floorbuffer, sizeof(Vertex), 0);
 		auto floorMVP =  view * projection;
 		auto newmat = ~(floorMVP);

@@ -24,12 +24,18 @@
     <ClInclude Include="..\include\Yasp\EntityComponent\Pool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Yasp\EntityComponent\ComponentContainer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\EntityComponent\Entity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\EntityComponent\EntityManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\EntityComponent\ComponentContainer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

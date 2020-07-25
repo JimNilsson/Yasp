@@ -3,6 +3,9 @@
 
 namespace yasp
 {
+	
+
+
 	template <typename T>
 	class Pool
 	{

@@ -3,6 +3,7 @@
 
 #include <Yasp/Config.h>
 #include <Yasp/EntityComponent/Entity.h>
+#include <Yasp/EntityComponent/ComponentContainer.h>
 #include <Yasp/detail.h>
 #include <unordered_map>
 #include <any>
@@ -53,9 +54,6 @@ namespace yasp
 			_ForEach(typename detail::deduce_type< decltype(&F::operator()) >::type(fn));
 		}
 
-		template <typename T>
-		std::optional<std::reference_wrapper<T>> Retrieve(Entity entity);
-
 	private:
 		template <typename T>
 		void RegisterComponent(Entity entity);
@@ -81,9 +79,13 @@ namespace yasp
 		template <typename First, typename Second, typename ...Rest>
 		void _ForEach(const std::function<void(Entity, First&, Second&, Rest&...)>& func);
 
+		template<typename T>
+		T& _Retrieve(Entity entity);
+
 		std::vector<uint8_t> entityGenerations;
 		std::vector<uint32_t> freeIndices;
-		std::unordered_map<uint64_t, std::unordered_map<Entity, std::any, Entity::EntityHasher>> componentPools;
+		std::unordered_map<uint64_t, ComponentContainer> componentPools;
+		std::unordered_map<uint64_t, std::unordered_map<Entity, std::any, Entity::EntityHasher>> componentPools2;
 		std::unordered_map<Entity, uint64_t, Entity::EntityHasher> componentMasks;
 	};
 
@@ -117,11 +119,13 @@ namespace yasp
 	inline void EntityManager::_ForEach(const std::function<void(Entity, First&)>& func)
 	{
 		auto mask = ConstructMask<First>();
-		for (auto it : componentMasks)
+		auto result = componentPools.try_emplace(TypeId<First>(), sizeof(First));
+		auto& container = (*result.first).second;
+		for (auto& it : componentMasks)
 		{
 			if (mask == it.second && IsAlive(it.first))
 			{
-				auto args = std::tuple_cat(std::tuple<Entity>(it.first), SafeRetrieve<First>(it.first));
+				auto args = std::tuple<Entity, First&>(it.first, container[it.first]);
 				std::apply(func, args);
 			}
 		}
@@ -131,13 +135,13 @@ namespace yasp
 	inline void EntityManager::_ForEach(const std::function<void(Entity, First&, Second&, Rest&...)>& func)
 	{
 		auto mask = ConstructMask<First, Second, Rest...>();
-		for (auto it : componentMasks)
+		for (auto& it : componentMasks)
 		{
 			auto f = mask & it.second;
 			if ((mask & it.second) == mask && IsAlive(it.first))
 			{
-				int k = 5;
-				auto args = std::tuple_cat(std::tuple<Entity>(it.first), SafeRetrieve<First, Second, Rest...>(it.first));
+				auto comps = SafeRetrieve<First, Second, Rest...>(it.first);
+				auto args = std::tuple_cat(std::tuple<Entity>(it.first), comps);
 				std::apply(func, args);
 			}
 		}
@@ -147,14 +151,18 @@ namespace yasp
 	inline void EntityManager::RegisterComponent(Entity entity)
 	{	
 		componentMasks[entity] |= ConstructMask<T>();
-		componentPools[TypeId<T>()][entity];
+		auto result = componentPools.try_emplace(TypeId<T>(), sizeof(T));
+		auto& container = (*result.first).second;
+		container[entity] = T();
 	}
 
 	template<typename T>
 	inline void EntityManager::RegisterComponent(Entity entity, const T& component)
 	{
 		componentMasks[entity] |= ConstructMask<T>();
-		componentPools[TypeId<T>()][entity] = component;
+		auto result = componentPools.try_emplace(TypeId<T>(), sizeof(T));
+		auto& container = (*result.first).second;
+		container[entity] = component;
 	}
 
 	template<typename First>
@@ -172,7 +180,7 @@ namespace yasp
 	template<typename First>
 	inline std::tuple<First&> EntityManager::SafeRetrieve(Entity entity)
 	{
-		return std::tuple<First&>(Retrieve<First>(entity).value().get());
+		return std::tuple<First&>(_Retrieve<First>(entity));
 	}
 
 	template<typename First, typename Second, typename ...Rest>
@@ -182,16 +190,12 @@ namespace yasp
 	}
 
 	template<typename T>
-	inline std::optional<std::reference_wrapper<T>> EntityManager::Retrieve(Entity entity)
+	inline T& EntityManager::_Retrieve(Entity entity)
 	{
-		auto it = componentPools[TypeId<T>()].find(entity);
-		if (it == componentPools[TypeId<T>()].end())
-		{
-			return std::nullopt;
-		}
-		return std::optional<std::reference_wrapper<T>>(std::any_cast<T&>(it->second));
+		auto result = componentPools.try_emplace(TypeId<T>(), sizeof(T));
+		auto& container = (*result.first).second;
+		return container[entity];
 	}
-
 }
 
 #endif

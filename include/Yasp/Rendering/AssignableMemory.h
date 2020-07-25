@@ -27,6 +27,12 @@ namespace yasp
 			return AssignableMemory(data, size, index);
 		}
 
+		template <typename T>
+		operator T&()
+		{
+			return *reinterpret_cast<T*>(static_cast<uint8_t*>(data) + offset * sizeof(T));
+		}
+
 	private:
 		AssignableMemory(void* data, size_t size, int32_t offset) : data(data), size(size), offset(offset) {}
 		void* data;
