@@ -3,6 +3,7 @@
 
 #include <Yasp/Rendering/GPUResourceID.h>
 #include <Yasp/Rendering/AssignableMemory.h>
+#include <functional>
 
 
 namespace yasp
@@ -16,10 +17,9 @@ namespace yasp
 		virtual ~GPUBuffer();
 		GPUBuffer(const GPUBuffer& other);
 		virtual GPUBuffer& operator=(const GPUBuffer& other);
-		
-
 		AssignableMemory operator[](const std::string& identifier);
 		void Update();
+		void OnEachElement(std::function<void(const std::string&, AssignableMemory)> callback);
 
 	private:
 		IGPUResourceManager* resourceManager;

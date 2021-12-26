@@ -19,6 +19,11 @@ namespace yasp
 		virtual GPUBuffer CreateBuffer(const BufferDesc& bufferDesc, void* initialData) = 0;
 		virtual Shader CreateVertexShader(const std::string& filename) = 0;
 		virtual Shader CreatePixelShader(const std::string& filename) = 0;
+		virtual Shader GetShader(const GPUResourceID& id) = 0;
+		virtual size_t GetBufferElementCount(const GPUResourceID& id) = 0;
+		virtual const std::string& GetBufferElementName(const GPUResourceID& id, size_t offset) = 0;
+		virtual AssignableMemory GetBufferSegment(const GPUResourceID& id, size_t offset) = 0;
+
 		virtual GPUResourceID CreateRasterizer(RasterizerDesc rasterizerDesc) = 0;
 		virtual GPUResourceID CreateTexture2D(const Texture2DDesc& textureDesc, void* data = nullptr) = 0;
 		virtual GPUResourceID CreateTexture2DView(const Texture2DViewDesc& textureViewDesc, const GPUResourceID& texture) = 0;
@@ -26,7 +31,7 @@ namespace yasp
 	/*	virtual GPUResourceID CreateTexture(TextureDesc textureDesc) = 0;
 		virtual GPUResourceID CreateTextureView(TextureViewDesc textureViewDesc, GPUResourceID texture) = 0;
 		virtual GPUResourceID CreateShader(ShaderDesc shaderDesc) = 0;
-		virtual GPUResourceID CreateRasterizer(RasterizerDesc rasterizerDesc) = 0;
+
 		virtual GPUResourceID CreateBlendState(BlendStateDesc blendStateDesc) = 0;
 		virtual GPUResourceID CreateDepthTest(DepthStencilDesc depthTestDesc) = 0;
 		virtual GPUResourceID CreateDepthStencil(DepthStencilViewDesc depthStencilDesc) = 0;

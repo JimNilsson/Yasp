@@ -21,7 +21,7 @@ yasp::AssignableMemory yasp::ComponentContainer::operator[](Entity entity)
 	{
 		capacity += 256;
 		auto newData = new uint8_t[capacity * componentSize];
-		memcpy(newData, components, count);
+		memcpy(newData, components, count * componentSize);
 		delete[] components;
 		components = newData;
 	}

@@ -64,6 +64,14 @@ yasp::GPUBuffer yasp::ShaderD3D::GetBuffer(const std::string & identifier)
 	return GPUBuffer();
 }
 
+void yasp::ShaderD3D::OnEachBuffer(std::function<void(GPUBuffer)> callback)
+{
+	for (auto it : shaderBuffers)
+	{
+		callback(it.second);
+	}
+}
+
 void yasp::ShaderD3D::RegisterBinding(const std::string& identifier, ShaderResourceType type, int32_t slot)
 {
 	shaderResources[identifier] = { type, slot, GPUResourceID()};

@@ -4,6 +4,9 @@
 #include <Yasp/Rendering/GPUResourceID.h>
 #include <Yasp/Rendering/Enums.h>
 #include <string>
+#include <vector>
+#include <functional>
+
 namespace yasp
 {
 	class AssignableResource;
@@ -17,7 +20,7 @@ namespace yasp
 		virtual void SetResource(const std::string& identifier, const GPUResourceID& id) = 0;
 		virtual void Bind(const GPUResourceID&) = 0;
 		virtual GPUBuffer GetBuffer(const std::string& identifier) = 0;
-
+		virtual void OnEachBuffer(std::function<void(GPUBuffer)> callback) = 0;
 	protected:
 		ShaderType type;
 	};

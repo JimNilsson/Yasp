@@ -54,10 +54,17 @@ float4 main( VS_OUT input ) : SV_TARGET
 			
 		}
 	}
+	float3 sunlight = float3(1.0f,1.0f,1.0f);
+	sunlight = normalize(sunlight);
+	diffuseContribution += dot(input.nor, sunlight) * 2.0f * texColor;
 	
+	float4 dicks = float4(texColor.xyz * (diffuseContribution + specularContribution + float3(0.1f, 0.1f, 0.1f)), 1.0f);
 	
-	//return saturate(float4(input.nor, 1.0f));
+	//return saturate(float4(input.nor, dicks.w + dicks.z * 0.000001f));
 	//return float4(input.wpos, 1.0f);
 	//return float4(ndl, ndl, ndl, 1.0f);
+	//return float4(dot(input.nor, sunlight), dot(input.nor, sunlight),dot(input.nor, sunlight), 1.0f);
+	
+	//return float4(dot(input.nor, sunlight) + dicks.z - 1.0f, dot(input.nor, sunlight),dot(input.nor, sunlight), 1.0f);
 	return float4(texColor.xyz * (diffuseContribution + specularContribution + float3(0.1f, 0.1f, 0.1f)), 1.0f);
 }

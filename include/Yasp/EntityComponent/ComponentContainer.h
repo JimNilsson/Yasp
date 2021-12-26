@@ -14,7 +14,6 @@ namespace yasp
 		ComponentContainer(size_t componentSize);
 		~ComponentContainer();
 		
-
 		AssignableMemory operator[](Entity entity);
 
 	private:

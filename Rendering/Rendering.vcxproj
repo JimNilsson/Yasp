@@ -151,7 +151,6 @@
   <ItemGroup>
     <ClInclude Include="..\include\Yasp\Rendering\AssignableMemory.h" />
     <ClInclude Include="..\include\Yasp\Rendering\AssignableResource.h" />
-    <ClInclude Include="..\include\Yasp\Rendering\BufferLayout.h" />
     <ClInclude Include="..\include\Yasp\Rendering\Descriptions.h" />
     <ClInclude Include="..\include\Yasp\Rendering\Enums.h" />
     <ClInclude Include="..\include\Yasp\Rendering\GPUBuffer.h" />

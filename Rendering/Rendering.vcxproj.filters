@@ -83,8 +83,5 @@
     <ClInclude Include="..\include\Yasp\Rendering\AssignableResource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\Yasp\Rendering\BufferLayout.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

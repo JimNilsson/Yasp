@@ -39,3 +39,4 @@ bool yasp::EntityManager::IsAlive(Entity entity)
 {
 	return entityGenerations[entity.Index()] == entity.Gen();
 }
+

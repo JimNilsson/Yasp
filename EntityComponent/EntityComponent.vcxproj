@@ -138,15 +138,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\Yasp\EntityComponent\CameraSystem.h" />
     <ClInclude Include="..\include\Yasp\EntityComponent\ComponentContainer.h" />
+    <ClInclude Include="..\include\Yasp\EntityComponent\Components\GPUPipeline.h" />
+    <ClInclude Include="..\include\Yasp\EntityComponent\Components\IComponent.h" />
+    <ClInclude Include="..\include\Yasp\EntityComponent\Components\Lens.h" />
+    <ClInclude Include="..\include\Yasp\EntityComponent\Components\Position.h" />
+    <ClInclude Include="..\include\Yasp\EntityComponent\Components\Rotation.h" />
+    <ClInclude Include="..\include\Yasp\EntityComponent\Components\Scale.h" />
     <ClInclude Include="..\include\Yasp\EntityComponent\Entity.h" />
     <ClInclude Include="..\include\Yasp\EntityComponent\EntityManager.h" />
-    <ClInclude Include="..\include\Yasp\EntityComponent\Pool.h" />
+    <ClInclude Include="..\include\Yasp\EntityComponent\IEntitySystem.h" />
+    <ClInclude Include="..\include\Yasp\EntityComponent\RenderSystem.h" />
+    <ClInclude Include="..\include\Yasp\EntityComponent\TransformSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\EntityComponent\ComponentContainer.cpp" />
     <ClCompile Include="..\src\EntityComponent\Entity.cpp" />
     <ClCompile Include="..\src\EntityComponent\EntityManager.cpp" />
+    <ClCompile Include="..\src\EntityComponent\RenderSystem.cpp" />
+    <ClCompile Include="..\src\EntityComponent\TransformSystem.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

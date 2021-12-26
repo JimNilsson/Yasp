@@ -3,7 +3,9 @@
 
 #include <Yasp/Rendering/IShader.h>
 #include <Yasp/Rendering/GPUResourceID.h>
+#include <Yasp/Rendering/GPUBuffer.h>
 #include <Yasp/Rendering/AssignableResource.h>
+#include <functional>
 
 namespace yasp
 {
@@ -27,6 +29,16 @@ namespace yasp
 		AssignableResource operator[](const std::string& identifier)
 		{
 			return (*shader)[identifier];
+		}
+
+		GPUBuffer GetBuffer(const std::string& identifier)
+		{
+			return shader->GetBuffer(identifier);
+		}
+
+		void OnEachBuffer(std::function<void(GPUBuffer)> callback)
+		{
+			shader->OnEachBuffer(callback);
 		}
 
 		void Bind()

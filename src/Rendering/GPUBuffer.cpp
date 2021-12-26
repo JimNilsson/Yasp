@@ -28,3 +28,14 @@ void yasp::GPUBuffer::Update()
 {
 	resourceManager->UpdateBuffer(*this);
 }
+
+void yasp::GPUBuffer::OnEachElement(std::function<void(const std::string&, AssignableMemory)> callback)
+{
+	auto count = resourceManager->GetBufferElementCount(*this);
+	for (size_t i = 0; i < count; i++)
+	{
+		auto name = resourceManager->GetBufferElementName(*this, i);
+		auto bufferSegment = resourceManager->GetBufferSegment(*this, name);
+		callback(name, bufferSegment);
+	}
+}

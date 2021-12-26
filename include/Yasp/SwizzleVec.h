@@ -660,6 +660,7 @@ namespace yasp
 	using int3 = vec3<int>;
 	using float2 = vec2<float>;
 	using int2 = vec2<float>;
+	
 
 	constexpr float sqrtNR(float x, float cur, float prev)
 	{
@@ -706,6 +707,73 @@ namespace yasp
 	constexpr vec4<float> cross(const vec4<float>& a, const vec4<float>& b) { return { a.y * b.z - b.y * a.z, -(a.x * b.z - a.z * b.x), a.x * b.y - a.y * b.x, 0.0f }; }
 
 
+	class quaternion : public float4
+	{
+	public:
+		using float4::float4;
+
+		constexpr quaternion operator*(const quaternion& rhs) const
+		{
+			const float4& p = *this;
+			const float4& q = rhs;
+			const auto pxq = cross(p.yzw, q.yzw);
+			const auto p0q = p.x * float3(q.yzw);
+			const auto q0p = q.x * float3(p.yzw);
+			const auto u = pxq + p0q + q0p;
+			return {
+				p.x*q.x - dot(p.yzw,q.yzw),
+				u.x,
+				u.y,
+				u.z
+			};
+		}
+
+		quaternion& operator*=(const quaternion& rhs)
+		{
+			const auto result = *this * rhs;
+			*this = result;
+			return *this;
+		}
+
+		quaternion ComplexConjugate() const
+		{
+			return {
+				x,
+				-y,
+				-z,
+				-w
+			};
+		}
+
+		float Norm() const
+		{
+			return std::sqrtf(x*x + y*y + z*z + w*w);
+		}
+
+		float NormSquared() const
+		{
+			return x * x + y * y + z * z + w * w;
+		}
+
+		quaternion Inverse() const
+		{
+			const auto normSquare = NormSquared();
+			return { x / normSquare, y / normSquare, z / normSquare, w / normSquare };
+		}
+		
+		float3 Rotate(const float3& v) const
+		{
+			const auto& p = *this;
+			const quaternion vq = { 0.0f, v.x, v.y, v.z };
+
+			return ( p * vq * p.ComplexConjugate()).yzw;
+			/*const auto v1 = (p.x*p.x - p.NormSquared()) * v;
+			const auto v2 = 2 * dot(p.yzw, v) * float3(p.yzw);
+			const auto v3 = w * p.x * cross(float3(p.yzw), v);
+			return v1 + v2 + v3;*/
+		}
+
+	};
 
 	class mat4
 	{
@@ -739,6 +807,13 @@ namespace yasp
 		explicit constexpr mat4(float fill) : r1(fill, fill, fill, fill), r2(fill, fill, fill, fill), r3(fill, fill, fill, fill), r4(fill, fill, fill, fill) {}
 		constexpr mat4() : r1(1, 0, 0, 0), r2(0, 1, 0, 0), r3(0, 0, 1, 0), r4(0, 0, 0, 1) {}
 		constexpr mat4(vec4<float> r1, vec4<float> r2, vec4<float> r3, vec4<float> r4) : r1(r1), r2(r2), r3(r3), r4(r4) {}
+		//constexpr mat4(const mat4& other)
+		//{
+		//	this->r1 = other.r1;
+		//	this->r2 = other.r2;
+		//	this->r3 = other.r3;
+		//	this->r4 = other.r4;
+		//};
 
 		constexpr static mat4 Identity() { return { { 1,0,0,0 },{ 0,1,0,0 },{ 0,0,1,0 },{ 0,0,0,1 } }; }
 		constexpr static mat4 Translation(float x, float y, float z) { return { { 1,0,0,0 },{ 0,1,0,0 },{ 0,0,1,0 },{ x,y,z,1 } }; }
@@ -767,6 +842,14 @@ namespace yasp
 				{ v.z*v.x*cn - v.y*s,  v.z*v.y*cn + v.x*s,     c + v.z*v.z*cn,         0 },
 				{ 0,                0,                    0,                    1 }
 			};
+		}
+
+		static float3 GetRollPitchYaw(const mat4& m)
+		{
+			const float p = std::atanf(m.r2.x / m.r1.x);
+			const float y = std::atanf(-m.r3.x / std::sqrtf(m.r3.y*m.r3.y + m.r3.z*m.r3.z));
+			const float r = std::atanf(m.r3.y / m.r3.z);
+			return float3(r, p, y);
 		}
 
 		static mat4 RotationQuaternion(const float4& q)
@@ -1015,5 +1098,6 @@ namespace yasp
 
 		friend std::ostream& operator<<(std::ostream& stream, const mat4& m) { stream << m.r1 << "\n" << m.r2 << "\n" << m.r3 << "\n" << m.r4; return stream; }
 	};
+
 };
 #endif

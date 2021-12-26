@@ -3,7 +3,6 @@
 
 #include <Yasp/Rendering/IShader.h>
 #include <Yasp/Rendering/Descriptions.h>
-#include <Yasp/Rendering/BufferLayout.h>
 #include <string>
 #include <unordered_map>
 #include <variant>
@@ -21,6 +20,7 @@ namespace yasp
 		void SetResource(const std::string& identifier, const GPUResourceID& id) override final;
 		void Bind(const GPUResourceID&) override final;
 		GPUBuffer GetBuffer(const std::string& identifier) override final;
+		void OnEachBuffer(std::function<void(GPUBuffer)> callback) override final;
 
 		void RegisterBinding(const std::string& identifier, ShaderResourceType type, int32_t slot);
 		void RegisterBuffer(const std::string& identifier, GPUBuffer buffer, int32_t slot);

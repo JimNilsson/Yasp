@@ -23,6 +23,7 @@ namespace yasp
 		GPUBuffer CreateBuffer(const BufferDesc& bufferDesc, void* initialData) override final;
 		Shader CreateVertexShader(const std::string& filename) override final;
 		Shader CreatePixelShader(const std::string& filename) override final;
+		Shader GetShader(const GPUResourceID& id) override final;
 		GPUResourceID CreateRasterizer(RasterizerDesc rasterizerDesc) override final;
 		GPUResourceID CreateTexture2D(const Texture2DDesc& textureDesc, void* data = nullptr) override final;
 		GPUResourceID CreateTexture2DView(const Texture2DViewDesc& textureViewDesc, const GPUResourceID& texture) override final;
@@ -30,7 +31,10 @@ namespace yasp
 
 		void UpdateBuffer(const GPUResourceID& id, void* data, uint32 size) override final;
 		void UpdateBuffer(const GPUResourceID& id) override final;
+		size_t GetBufferElementCount(const GPUResourceID& id)  override final;
+		const std::string& GetBufferElementName(const GPUResourceID& id, size_t offset) override final;
 		AssignableMemory GetBufferSegment(const GPUResourceID& id, const std::string& identifier) override final;
+		AssignableMemory GetBufferSegment(const GPUResourceID& id, size_t offset) override final;
 
 		void SetVertexBuffer(const GPUResourceID& id, uint32 stride, uint32 offset) override final;
 		void SetIndexBuffer(const GPUResourceID& id, IndexFormat format, uint32 offset) override final;
@@ -83,6 +87,8 @@ namespace yasp
 			void* resourceData = nullptr;
 			size_t resourceDataSize = 0;
 			std::unordered_map<std::string, SizeOffset> namedOffsets;
+			std::vector<std::string> names;
+			std::vector<SizeOffset> offsets;
 		};
 		uint32 resourceCounter;
 		std::unordered_map<GPUResourceID, GPUResourceD3D, GPUResourceID::Hasher> resourceMap;

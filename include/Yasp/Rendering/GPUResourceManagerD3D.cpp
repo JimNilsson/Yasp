@@ -54,15 +54,23 @@ yasp::GPUResourceManagerD3D::~GPUResourceManagerD3D()
 			break;
 		case ResourceType::VERTEX_SHADER:
 			r.second.vertexShader->Release();
+			delete (Shader*)r.second.resourceData;
+			r.second.resourceData = nullptr;
 			break;
 		case ResourceType::GEOMETRY_SHADER:
 			r.second.geometryShader->Release();
+			delete (Shader*)r.second.resourceData;
+			r.second.resourceData = nullptr;
 			break;
 		case ResourceType::PIXEL_SHADER:
 			r.second.pixelShader->Release();
+			delete (Shader*)r.second.resourceData;
+			r.second.resourceData = nullptr;
 			break;
 		case ResourceType::COMPUTE_SHADER:
 			r.second.computeShader->Release();
+			delete (Shader*)r.second.resourceData;
+			r.second.resourceData = nullptr;
 			break;
 		case ResourceType::BLEND_STATE:
 			r.second.blendState->Release();
@@ -159,11 +167,11 @@ yasp::Shader yasp::GPUResourceManagerD3D::CreateVertexShader(const std::string &
 
 	assert(SUCCEEDED(hr));
 	ShaderD3D* shader = new ShaderD3D(ShaderType::VERTEX, this);
-	Shader id(resourceCounter++, shader);
-	resourceMap[id] = { ResourceType::VERTEX_SHADER, vertexShader };
+	Shader* id = new Shader(resourceCounter++, shader);
+	resourceMap[*id] = { ResourceType::VERTEX_SHADER, vertexShader, id, sizeof(*id) };
 	VertexShaderReflection(shaderCode, *shader);
 	shaderCode->Release();
-	return id;
+	return *id;
 }
 
 yasp::Shader yasp::GPUResourceManagerD3D::CreatePixelShader(const std::string & filename)
@@ -189,11 +197,18 @@ yasp::Shader yasp::GPUResourceManagerD3D::CreatePixelShader(const std::string & 
 	
 	
 	ShaderD3D* shader = new ShaderD3D(ShaderType::PIXEL, this);
-	Shader id(resourceCounter++, shader);
-	resourceMap[id] = { ResourceType::PIXEL_SHADER, pixelShader };
+	Shader* id = new Shader(resourceCounter++, shader);
+	resourceMap[*id] = { ResourceType::PIXEL_SHADER, pixelShader, id, sizeof(*id) };
 	PixelShaderReflection(shaderCode, *shader);
 	shaderCode->Release();
-	return id;
+	return *id;
+}
+
+yasp::Shader yasp::GPUResourceManagerD3D::GetShader(const GPUResourceID & id)
+{
+	auto it = resourceMap.find(id);
+	assert(it != resourceMap.end());
+	return *reinterpret_cast<Shader*>(it->second.resourceData);
 }
 
 yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreateRasterizer(RasterizerDesc rasterizerDesc)
@@ -396,6 +411,33 @@ yasp::AssignableMemory yasp::GPUResourceManagerD3D::GetBufferSegment(const GPURe
 		return AssignableMemory(f->second.resourceData, f->second.resourceDataSize);
 	}
 	return AssignableMemory();
+}
+
+size_t yasp::GPUResourceManagerD3D::GetBufferElementCount(const GPUResourceID & id)
+{
+	if (auto f = resourceMap.find(id); f != resourceMap.end())
+	{
+		return f->second.names.size();
+	}
+	return 0;
+}
+
+const std::string & yasp::GPUResourceManagerD3D::GetBufferElementName(const GPUResourceID & id, size_t offset)
+{
+	if (auto f = resourceMap.find(id); f != resourceMap.end())
+	{
+		return f->second.names[offset];
+	}
+	throw std::exception("GetBufferElementName failed to find resource");
+}
+
+yasp::AssignableMemory yasp::GPUResourceManagerD3D::GetBufferSegment(const GPUResourceID & id, size_t offset)
+{
+	if (auto f = resourceMap.find(id); f != resourceMap.end())
+	{
+		return AssignableMemory(static_cast<uint8_t*>(f->second.resourceData) + f->second.offsets[offset].offset, f->second.offsets[offset].size);
+	}
+	throw std::exception("GetBufferSegment GPU resource ID not found");
 }
 
 void yasp::GPUResourceManagerD3D::SetVertexBuffer(const GPUResourceID& id, uint32 stride, uint32 offset)
@@ -691,6 +733,11 @@ void yasp::GPUResourceManagerD3D::RegisterProperty(const GPUResourceID & id, con
 {
 	if (auto f = resourceMap.find(id); f != resourceMap.end())
 	{
-		f->second.namedOffsets[name] = { size, offset };
+		if (auto g = f->second.namedOffsets.find(name); g == f->second.namedOffsets.end())
+		{
+			f->second.namedOffsets[name] = { size, offset };
+			f->second.names.push_back(name);
+			f->second.offsets.push_back({ size, offset });
+		}
 	}
 }
