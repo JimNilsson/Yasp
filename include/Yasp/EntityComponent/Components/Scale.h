@@ -10,7 +10,6 @@ namespace yasp
 	{
 	public:
 		using yasp::float4::float4;
-		static constexpr const char* Name() { return "Scale"; };
 	};
 }
 

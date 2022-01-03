@@ -17,8 +17,10 @@ namespace yasp
 		IGPUResourceManager() {};
 		virtual ~IGPUResourceManager() = 0 {};
 		virtual GPUBuffer CreateBuffer(const BufferDesc& bufferDesc, void* initialData) = 0;
+		virtual Shader CreateVertexShader(const void* shaderSourceCode, size_t shaderSourceSize) = 0;
 		virtual Shader CreateVertexShader(const std::string& filename) = 0;
 		virtual Shader CreatePixelShader(const std::string& filename) = 0;
+		virtual Shader CreatePixelShader(const void* shaderSourceCode, size_t shaderSourceSize) = 0;
 		virtual Shader GetShader(const GPUResourceID& id) = 0;
 		virtual size_t GetBufferElementCount(const GPUResourceID& id) = 0;
 		virtual const std::string& GetBufferElementName(const GPUResourceID& id, size_t offset) = 0;

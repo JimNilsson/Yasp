@@ -19,7 +19,6 @@ namespace yasp
 			using GPUResourceID::GPUResourceID;
 			VertexShader() : GPUResourceID() {}
 			VertexShader(const  GPUResourceID& o) : GPUResourceID(o) {}
-			static constexpr const char* Name() { return "VertexShader"; }
 		};
 		class PixelShader : public GPUResourceID { using GPUResourceID::GPUResourceID; };
 		class Rasterizer : public GPUResourceID { using GPUResourceID::GPUResourceID; };
@@ -34,14 +33,12 @@ namespace yasp
 		RenderSystem(EntityManager& entityManager, RenderContext& renderContext) : IEntitySystem(entityManager), renderContext(renderContext) {}
 		~RenderSystem() {};
 
-		void PreFrame() override final;
-		void Frame() override final;
-		void PostFrame() override final;
-
-
 
 	private:
 		RenderContext& renderContext;
+
+	
+
 	};
 }
 

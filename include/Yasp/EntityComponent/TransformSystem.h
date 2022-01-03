@@ -51,12 +51,8 @@ namespace yasp
 		}
 		virtual ~TransformSystem() {}
 
-		void PreFrame() override final;
-		void Frame() override final;
-		void PostFrame() override final;
 		void Register(const Entity& entity, const Position& position, const Rotation& rotation, const Scale& scale);
 
-		const mat4& GetTransform(const Entity& entity);
 
 	private:
 		std::unordered_map<Entity, size_t, Entity::EntityHasher> entityIndices;

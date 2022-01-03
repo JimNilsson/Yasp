@@ -21,8 +21,10 @@ namespace yasp
 		~GPUResourceManagerD3D();
 
 		GPUBuffer CreateBuffer(const BufferDesc& bufferDesc, void* initialData) override final;
+		Shader CreateVertexShader(const void* shaderSourceCode, size_t shaderSourceSize) override final;
 		Shader CreateVertexShader(const std::string& filename) override final;
 		Shader CreatePixelShader(const std::string& filename) override final;
+		Shader CreatePixelShader(const void* shaderSourceCode, size_t shaderSourceSize) override final;
 		Shader GetShader(const GPUResourceID& id) override final;
 		GPUResourceID CreateRasterizer(RasterizerDesc rasterizerDesc) override final;
 		GPUResourceID CreateTexture2D(const Texture2DDesc& textureDesc, void* data = nullptr) override final;

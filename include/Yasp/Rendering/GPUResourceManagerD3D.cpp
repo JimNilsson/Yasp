@@ -147,6 +147,31 @@ yasp::GPUBuffer yasp::GPUResourceManagerD3D::CreateBuffer(const BufferDesc& buff
 	return id;
 }
 
+yasp::Shader yasp::GPUResourceManagerD3D::CreateVertexShader(const void * shaderSourceCode, size_t shaderSourceSize)
+{
+	ID3DBlob* shaderCode = nullptr;
+	ID3DBlob* errors = nullptr;
+	HRESULT hr = D3DCompile(shaderSourceCode, shaderSourceSize, nullptr, nullptr, nullptr, "main", "vs_5_0", D3DCOMPILE_OPTIMIZATION_LEVEL3, 0, &shaderCode, &errors);
+	if (FAILED(hr))
+	{
+		throw std::exception(static_cast<char*>(errors->GetBufferPointer()));
+	}
+
+	ID3D11VertexShader* vertexShader;
+	hr = device->CreateVertexShader(shaderCode->GetBufferPointer(), shaderCode->GetBufferSize(), nullptr, &vertexShader);
+	if (FAILED(hr))
+	{
+		shaderCode->Release();
+		throw std::exception("Failed to reflect shader");
+	}
+	ShaderD3D* shader = new ShaderD3D(ShaderType::VERTEX, this);
+	Shader* id = new Shader(resourceCounter++, shader);
+	resourceMap[*id] = { ResourceType::VERTEX_SHADER, vertexShader, id, sizeof(*id) };
+	VertexShaderReflection(shaderCode, *shader);
+	shaderCode->Release();
+	return *id;
+}
+
 yasp::Shader yasp::GPUResourceManagerD3D::CreateVertexShader(const std::string & filename)
 {
 	ID3DBlob* shaderCode = nullptr;
@@ -199,6 +224,31 @@ yasp::Shader yasp::GPUResourceManagerD3D::CreatePixelShader(const std::string & 
 	ShaderD3D* shader = new ShaderD3D(ShaderType::PIXEL, this);
 	Shader* id = new Shader(resourceCounter++, shader);
 	resourceMap[*id] = { ResourceType::PIXEL_SHADER, pixelShader, id, sizeof(*id) };
+	PixelShaderReflection(shaderCode, *shader);
+	shaderCode->Release();
+	return *id;
+}
+
+yasp::Shader yasp::GPUResourceManagerD3D::CreatePixelShader(const void * shaderSourceCode, size_t shaderSourceSize)
+{
+	ID3DBlob* shaderCode = nullptr;
+	ID3DBlob* errors = nullptr;
+	HRESULT hr = D3DCompile(shaderSourceCode, shaderSourceSize, nullptr, nullptr, nullptr, "main", "ps_5_0", D3DCOMPILE_OPTIMIZATION_LEVEL3, 0, &shaderCode, &errors);
+	if (FAILED(hr))
+	{
+		throw std::exception(static_cast<char*>(errors->GetBufferPointer()));
+	}
+
+	ID3D11VertexShader* pixelShader;
+	hr = device->CreateVertexShader(shaderCode->GetBufferPointer(), shaderCode->GetBufferSize(), nullptr, &pixelShader);
+	if (FAILED(hr))
+	{
+		shaderCode->Release();
+		throw std::exception("Failed to reflect shader");
+	}
+	ShaderD3D* shader = new ShaderD3D(ShaderType::VERTEX, this);
+	Shader* id = new Shader(resourceCounter++, shader);
+	resourceMap[*id] = { ResourceType::VERTEX_SHADER, pixelShader, id, sizeof(*id) };
 	PixelShaderReflection(shaderCode, *shader);
 	shaderCode->Release();
 	return *id;

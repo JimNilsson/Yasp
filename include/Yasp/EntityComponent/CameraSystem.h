@@ -56,10 +56,6 @@ namespace yasp
 		}
 		~CameraSystem() {}
 
-		void PreFrame() override final {}
-		void Frame() override final {}
-		void PostFrame() override final {}
-
 		bool SetActiveCamera(Entity e)
 		{
 			if (auto it = entityIndices.find(e); it != entityIndices.end())

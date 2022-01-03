@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <Yasp/EntityComponent/Components/IComponent.h>
 #include <Yasp/EntityComponent/Components/Lens.h>
+#include <Yasp/ImguiYasp/ImguiYasp.h>
 
 yasp::float3 randvec()
 {
@@ -49,16 +50,20 @@ int main(int argc, char** argv)
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	yasp::Window window(1280, 720);
+	window.SetGrabCursor(true);
 	yasp::RenderContext renderContext(window.GetWindowHandle());
+	auto pipe = renderContext.ResourceManager();
 	yasp::EntityManager em;
 	yasp::TransformSystem tm(em);
 	yasp::RenderSystem rm(em, renderContext);
 	yasp::CameraSystem cm(em);
 
+	ImGui_ImplYasp_Init(window, renderContext);
+
 
 	yasp::Entity e = {};
 	std::vector<yasp::Entity> entities;
-	for (int i = 0; i < 20; i++)
+	for (int i = 0; i < 500; i++)
 	{
 		auto ent = em.Create();
 		e = ent;
@@ -75,8 +80,6 @@ int main(int argc, char** argv)
 	em.Register(camera2, yasp::Lens(), yasp::Position(0.0f, 0.0f, 0.0f, 1.0f), yasp::Rotation(1.0f, 0.0f, 0.0f, 0.0f));
 	cm.SetActiveCamera(cameraEntity);
 
-
-	window.SetGrabCursor(true);
 	yasp::BufferDesc bd;
 	bd.bind = yasp::BIND_SHADER_BUFFER;
 	bd.byteStride = 0;
@@ -102,7 +105,7 @@ int main(int argc, char** argv)
 		pl = PointLight(p.x, p.y, p.z, 2.0f);
 	}
 	
-	auto pipe = renderContext.ResourceManager();
+	
 	auto vshader = pipe->CreateVertexShader("SimpleVS.hlsl");
 
 	yasp::gpu_components::VertexShader vs = yasp::GPUResourceID(vshader);
@@ -114,7 +117,45 @@ int main(int argc, char** argv)
 	
 
 	auto pshader = pipe->CreatePixelShader("SimplePS.hlsl");
-	//
+	
+
+	static const char* imguiVertexShaderCode = 
+		"cbuffer vertexBuffer : register(b0) \
+            {\
+              float4x4 ProjectionMatrix; \
+            };\
+            struct VS_INPUT\
+            {\
+              float2 pos : POSITION;\
+              float4 col : COLOR0;\
+              float2 uv  : TEXCOORD0;\
+            };\
+            \
+            struct PS_INPUT\
+            {\
+              float4 pos : SV_POSITION;\
+              float4 col : COLOR0;\
+              float2 uv  : TEXCOORD0;\
+            };\
+            \
+            PS_INPUT main(VS_INPUT input)\
+            {\
+              PS_INPUT output;\
+              output.pos = mul( ProjectionMatrix, float4(input.pos.xy, 0.f, 1.f));\
+              output.col = input.col;\
+              output.uv  = input.uv;\
+              return output;\
+            }";
+
+	try
+	{
+		auto imguiVertexShader = pipe->CreateVertexShader(imguiVertexShaderCode, strlen(imguiVertexShaderCode));
+	}
+	catch (std::exception& e)
+	{
+		std::cout << e.what();
+	}
+	
 
 	auto rasterizer = pipe->CreateRasterizer({
 		yasp::FillMode::SOLID,
@@ -281,6 +322,7 @@ int main(int argc, char** argv)
 	while (window.IsOpen())
 	{
 		window.PollEvents();
+		ImGui_ImplYasp_NewFrame();
 		em.PreFrame();
 		float dt = timer.Tick();
 		accTime += dt;
@@ -311,6 +353,7 @@ int main(int argc, char** argv)
 		if (yasp::Keyboard::WasKeyReleased(yasp::Keyboard::Key::ESCAPE))
 		{
 			window.Close();
+			break;
 		}
 		if (yasp::Keyboard::WasKeyPressed(yasp::Keyboard::Key::G))
 		{
@@ -375,7 +418,6 @@ int main(int argc, char** argv)
 				v.z = -v.z;
 			}
 		});
-		tm.PreFrame();
 
 		em.Update(cameraEntity, yasp::Position(pos.xyz, 1.0f), yasp::Rotation(cameraRotation.x, cameraRotation.y, cameraRotation.z, cameraRotation.w));
 		em.FireUpdateCallbacks();
@@ -383,7 +425,6 @@ int main(int argc, char** argv)
 		em.ForEach([&](yasp::Entity e, yasp::gpu_components::VertexShader& vertexShaderId)
 		{
 			auto vertexShader = pipe->GetShader(vertexShaderId);
-			auto t = tm.GetTransform(e);
 
 			vertexShader.OnEachBuffer([&](yasp::GPUBuffer buffer)
 			{
@@ -395,6 +436,7 @@ int main(int argc, char** argv)
 			});
 
 			renderContext.Draw(36, 0);
+			
 		});
 		 
 		pipe->SetVertexBuffer(floorbuffer, sizeof(Vertex), 0);
@@ -410,6 +452,7 @@ int main(int argc, char** argv)
 
 		pshader.Bind();
 		renderContext.Draw(6, 0);
+		
 		renderContext.Display();
 	}
 	return 0;
