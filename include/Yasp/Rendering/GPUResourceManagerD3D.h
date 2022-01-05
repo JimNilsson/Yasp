@@ -30,9 +30,12 @@ namespace yasp
 		GPUResourceID CreateTexture2D(const Texture2DDesc& textureDesc, void* data = nullptr) override final;
 		GPUResourceID CreateTexture2DView(const Texture2DViewDesc& textureViewDesc, const GPUResourceID& texture) override final;
 		GPUResourceID CreateSampler(const SamplerDesc& samplerDesc) override final;
+		GPUResourceID CreateDepthStencilState(const DepthStencilDesc& depthStencilDesc) override final;
+		GPUResourceID CreateBlendState(const BlendStateDesc& blendStateDesc) override final;
 
 		void UpdateBuffer(const GPUResourceID& id, void* data, uint32 size) override final;
 		void UpdateBuffer(const GPUResourceID& id) override final;
+		void StageBuffer(const GPUResourceID& id, void* data, size_t size, size_t offset = 0) override final;
 		size_t GetBufferElementCount(const GPUResourceID& id)  override final;
 		const std::string& GetBufferElementName(const GPUResourceID& id, size_t offset) override final;
 		AssignableMemory GetBufferSegment(const GPUResourceID& id, const std::string& identifier) override final;
@@ -47,6 +50,7 @@ namespace yasp
 		void SetGeometryShader(const GPUResourceID& id) override final;
 		void SetPixelShader(const GPUResourceID& id) override final;
 		void SetRasterizer(const GPUResourceID& id) override final;
+		void SetDepthStencilState(const GPUResourceID& id, uint32_t reference = 0) override final;
 		void SetBlendState(const GPUResourceID& id, const float* blendFactor, uint32 mask) override final;
 
 

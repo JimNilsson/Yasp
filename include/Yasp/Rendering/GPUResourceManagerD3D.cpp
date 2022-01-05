@@ -239,14 +239,14 @@ yasp::Shader yasp::GPUResourceManagerD3D::CreatePixelShader(const void * shaderS
 		throw std::exception(static_cast<char*>(errors->GetBufferPointer()));
 	}
 
-	ID3D11VertexShader* pixelShader;
-	hr = device->CreateVertexShader(shaderCode->GetBufferPointer(), shaderCode->GetBufferSize(), nullptr, &pixelShader);
+	ID3D11PixelShader* pixelShader;
+	hr = device->CreatePixelShader(shaderCode->GetBufferPointer(), shaderCode->GetBufferSize(), nullptr, &pixelShader);
 	if (FAILED(hr))
 	{
 		shaderCode->Release();
 		throw std::exception("Failed to reflect shader");
 	}
-	ShaderD3D* shader = new ShaderD3D(ShaderType::VERTEX, this);
+	ShaderD3D* shader = new ShaderD3D(ShaderType::PIXEL, this);
 	Shader* id = new Shader(resourceCounter++, shader);
 	resourceMap[*id] = { ResourceType::VERTEX_SHADER, pixelShader, id, sizeof(*id) };
 	PixelShaderReflection(shaderCode, *shader);
@@ -298,10 +298,10 @@ yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreateRasterizer(RasterizerDesc
 	rd.AntialiasedLineEnable = false;
 	rd.DepthBias = 0;
 	rd.DepthBiasClamp = 0;
-	rd.DepthClipEnable = true;
+	rd.DepthClipEnable = rasterizerDesc.enableDepthClip;
 	rd.MultisampleEnable = false;
 	rd.SlopeScaledDepthBias = 0;
-	rd.ScissorEnable = false;
+	rd.ScissorEnable = rasterizerDesc.enableScissor;
 
 	HRESULT hr = device->CreateRasterizerState(&rd, &rs);
 	assert(SUCCEEDED(hr));
@@ -428,6 +428,128 @@ yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreateSampler(const SamplerDesc
 	return id;
 }
 
+yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreateDepthStencilState(const DepthStencilDesc & depthStencilDesc)
+{
+	D3D11_DEPTH_STENCIL_DESC dsd;
+	dsd.DepthEnable = depthStencilDesc.depthTest;
+	dsd.StencilEnable = depthStencilDesc.stencilTest;
+	dsd.StencilWriteMask = depthStencilDesc.stencilWriteMask;
+	dsd.StencilReadMask = depthStencilDesc.stencilReadMask;
+	switch (depthStencilDesc.depthWriteMask)
+	{
+		case DepthWriteMask::ZERO: { dsd.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ZERO; break; };
+		case DepthWriteMask::ALL: { dsd.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL; break; };						   
+	}
+
+	auto getComp = [](yasp::ComparisonFunc func) -> D3D11_COMPARISON_FUNC {
+		switch (func)
+		{
+			case ComparisonFunc::NEVER: { return D3D11_COMPARISON_NEVER; };
+			case ComparisonFunc::LESS: { return D3D11_COMPARISON_LESS; };
+			case ComparisonFunc::EQUAL: { return D3D11_COMPARISON_EQUAL; };
+			case ComparisonFunc::LESS_EQUAL: { return D3D11_COMPARISON_LESS_EQUAL; };
+			case ComparisonFunc::GREATER: { return D3D11_COMPARISON_GREATER; };
+			case ComparisonFunc::NOT_EQUAL: { return D3D11_COMPARISON_NOT_EQUAL; };
+			case ComparisonFunc::GREATER_EQUAL: { return D3D11_COMPARISON_GREATER_EQUAL; };
+			case ComparisonFunc::ALWAYS: { return D3D11_COMPARISON_ALWAYS; };
+		}
+		return D3D11_COMPARISON_ALWAYS;
+	};
+	dsd.DepthFunc = getComp(depthStencilDesc.comparisonMode);
+	
+	auto getOp = [](yasp::StencilOp op) -> D3D11_STENCIL_OP {
+		switch (op)
+		{
+			case StencilOp::KEEP: return D3D11_STENCIL_OP_KEEP;
+			case StencilOp::ZERO: return D3D11_STENCIL_OP_ZERO;
+			case StencilOp::REPLACE: return D3D11_STENCIL_OP_REPLACE;
+			case StencilOp::INCR_SAT: return D3D11_STENCIL_OP_INCR_SAT;
+			case StencilOp::DECR_SAT: return D3D11_STENCIL_OP_DECR_SAT;
+			case StencilOp::INVERT: return D3D11_STENCIL_OP_INVERT;
+			case StencilOp::INCR: return D3D11_STENCIL_OP_INCR;
+			case StencilOp::DECR: return D3D11_STENCIL_OP_DECR;
+		}
+		return D3D11_STENCIL_OP_KEEP;
+	};
+
+	dsd.FrontFace = {
+		getOp(depthStencilDesc.onFrontFaceFail),
+		getOp(depthStencilDesc.onFrontFaceFail),
+		getOp(depthStencilDesc.onFrontFaceFail),
+		getComp(depthStencilDesc.frontFaceComparison)
+	};
+
+	dsd.BackFace = {
+		getOp(depthStencilDesc.onBackFaceFail),
+		getOp(depthStencilDesc.onBackFaceFail),
+		getOp(depthStencilDesc.onBackFaceFail),
+		getComp(depthStencilDesc.backFaceComparison)
+	};
+
+	ID3D11DepthStencilState* depthStencilState = nullptr;
+	HRESULT hr = device->CreateDepthStencilState(&dsd, &depthStencilState);
+	assert(SUCCEEDED(hr));
+	auto id = GPUResourceID(resourceCounter++);
+	resourceMap[id] = { ResourceType::DEPTH_STENCIL_STATE, depthStencilState };
+	return id;
+}
+
+yasp::GPUResourceID yasp::GPUResourceManagerD3D::CreateBlendState(const BlendStateDesc & blendStateDesc)
+{
+	D3D11_BLEND_DESC bd;
+	bd.AlphaToCoverageEnable = blendStateDesc.alphaToCoverage;
+	bd.IndependentBlendEnable = blendStateDesc.independentBlending;
+
+	const auto getFactor = [](yasp::BlendFactor bf) -> D3D11_BLEND {
+		switch (bf)
+		{
+			case yasp::BlendFactor::ONE: return D3D11_BLEND_ONE;
+			case yasp::BlendFactor::ZERO: return D3D11_BLEND_ZERO;
+			case yasp::BlendFactor::SRC_COLOR: return D3D11_BLEND_SRC_COLOR;
+			case yasp::BlendFactor::SRC_ALPHA: return D3D11_BLEND_SRC_ALPHA;
+			case yasp::BlendFactor::INV_SRC_COLOR: return D3D11_BLEND_INV_SRC_COLOR;
+			case yasp::BlendFactor::INV_SRC_ALPHA: return D3D11_BLEND_INV_SRC_ALPHA;
+			case yasp::BlendFactor::DEST_COLOR: return D3D11_BLEND_DEST_COLOR;
+			case yasp::BlendFactor::DEST_ALPHA: return D3D11_BLEND_DEST_ALPHA;
+			case yasp::BlendFactor::INV_DEST_COLOR: return D3D11_BLEND_INV_DEST_COLOR;
+			case yasp::BlendFactor::INV_DEST_ALPHA: return D3D11_BLEND_INV_DEST_ALPHA;
+			default: return D3D11_BLEND_ONE;
+		}
+	};
+
+	const auto getOp = [](yasp::BlendOp bo) -> D3D11_BLEND_OP {
+		switch (bo)
+		{
+			case yasp::BlendOp::ADD: return D3D11_BLEND_OP_ADD;
+			case yasp::BlendOp::SUBTRACT: return D3D11_BLEND_OP_SUBTRACT;
+			case yasp::BlendOp::MIN: return D3D11_BLEND_OP_MIN;
+			case yasp::BlendOp::MAX: return D3D11_BLEND_OP_MAX;
+			default: return D3D11_BLEND_OP_ADD;
+		}
+	};
+
+	for (size_t i = 0; i < 8; i++)
+	{
+		bd.RenderTarget[i].BlendEnable = blendStateDesc.renderTargetBlend[i].enable;
+		bd.RenderTarget[i].SrcBlend = getFactor(blendStateDesc.renderTargetBlend[i].srcBlend);
+		bd.RenderTarget[i].DestBlend = getFactor(blendStateDesc.renderTargetBlend[i].destBlend);
+		bd.RenderTarget[i].SrcBlendAlpha = getFactor(blendStateDesc.renderTargetBlend[i].srcBlendAlpha);
+		bd.RenderTarget[i].DestBlendAlpha = getFactor(blendStateDesc.renderTargetBlend[i].destBlendAlpha);
+		bd.RenderTarget[i].BlendOp = getOp(blendStateDesc.renderTargetBlend[i].blendOpColor);
+		bd.RenderTarget[i].BlendOpAlpha = getOp(blendStateDesc.renderTargetBlend[i].blendOpAlpha);
+		bd.RenderTarget[i].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+	}
+	
+
+	ID3D11BlendState* blendState = nullptr;
+	HRESULT hr = device->CreateBlendState(&bd, &blendState);
+	assert(SUCCEEDED(hr));
+	auto id = GPUResourceID(resourceCounter++);
+	resourceMap[id] = { ResourceType::BLEND_STATE, blendState };
+	return id;
+
+}
+
 void yasp::GPUResourceManagerD3D::UpdateBuffer(const GPUResourceID& id, void * data, uint32 size)
 {
 	if (auto f = resourceMap.find(id); f != resourceMap.end())
@@ -447,6 +569,14 @@ void yasp::GPUResourceManagerD3D::UpdateBuffer(const GPUResourceID & id)
 		deviceContext->Map(f->second.buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &ms);
 		memcpy(ms.pData, f->second.resourceData, f->second.resourceDataSize);
 		deviceContext->Unmap(f->second.buffer, 0);
+	}
+}
+
+void yasp::GPUResourceManagerD3D::StageBuffer(const GPUResourceID & id, void * data, size_t size, size_t offset)
+{
+	if (auto f = resourceMap.find(id); f != resourceMap.end())
+	{
+		memcpy((uint8_t*)f->second.resourceData + offset, data, size);
 	}
 }
 
@@ -631,6 +761,14 @@ void yasp::GPUResourceManagerD3D::SetRasterizer(const GPUResourceID& id)
 	if (auto f = resourceMap.find(id); f != resourceMap.end())
 	{
 		deviceContext->RSSetState(f->second.rasterizerState);
+	}
+}
+
+void yasp::GPUResourceManagerD3D::SetDepthStencilState(const GPUResourceID & id, uint32_t reference)
+{
+	if (auto f = resourceMap.find(id); f != resourceMap.end())
+	{
+		deviceContext->OMSetDepthStencilState(f->second.depthStencilState, reference);
 	}
 }
 

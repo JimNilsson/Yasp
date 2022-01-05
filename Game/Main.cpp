@@ -58,6 +58,8 @@ int main(int argc, char** argv)
 	yasp::RenderSystem rm(em, renderContext);
 	yasp::CameraSystem cm(em);
 
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
 	ImGui_ImplYasp_Init(window, renderContext);
 
 
@@ -107,56 +109,13 @@ int main(int argc, char** argv)
 	
 	
 	auto vshader = pipe->CreateVertexShader("SimpleVS.hlsl");
-
 	yasp::gpu_components::VertexShader vs = yasp::GPUResourceID(vshader);
-
 	for (auto& ent : entities)
 	{
 		em.Register(ent, vs);
 	}
 	
-
 	auto pshader = pipe->CreatePixelShader("SimplePS.hlsl");
-	
-
-	static const char* imguiVertexShaderCode = 
-		"cbuffer vertexBuffer : register(b0) \
-            {\
-              float4x4 ProjectionMatrix; \
-            };\
-            struct VS_INPUT\
-            {\
-              float2 pos : POSITION;\
-              float4 col : COLOR0;\
-              float2 uv  : TEXCOORD0;\
-            };\
-            \
-            struct PS_INPUT\
-            {\
-              float4 pos : SV_POSITION;\
-              float4 col : COLOR0;\
-              float2 uv  : TEXCOORD0;\
-            };\
-            \
-            PS_INPUT main(VS_INPUT input)\
-            {\
-              PS_INPUT output;\
-              output.pos = mul( ProjectionMatrix, float4(input.pos.xy, 0.f, 1.f));\
-              output.col = input.col;\
-              output.uv  = input.uv;\
-              return output;\
-            }";
-
-	try
-	{
-		auto imguiVertexShader = pipe->CreateVertexShader(imguiVertexShaderCode, strlen(imguiVertexShaderCode));
-	}
-	catch (std::exception& e)
-	{
-		std::cout << e.what();
-	}
-	
-
 	auto rasterizer = pipe->CreateRasterizer({
 		yasp::FillMode::SOLID,
 		yasp::CullMode::NONE,
@@ -323,7 +282,8 @@ int main(int argc, char** argv)
 	{
 		window.PollEvents();
 		ImGui_ImplYasp_NewFrame();
-		em.PreFrame();
+		ImGui::NewFrame();
+
 		float dt = timer.Tick();
 		accTime += dt;
 		
@@ -394,8 +354,6 @@ int main(int argc, char** argv)
 		pshader["EyePos"].Update();
 		pshader.Bind();
 
-
-		
 		renderContext.Clear();
 		auto model = yasp::mat4::Identity();
 		view = yasp::mat4::LookToLH(pos, forward, up);
@@ -422,38 +380,43 @@ int main(int argc, char** argv)
 		em.Update(cameraEntity, yasp::Position(pos.xyz, 1.0f), yasp::Rotation(cameraRotation.x, cameraRotation.y, cameraRotation.z, cameraRotation.w));
 		em.FireUpdateCallbacks();
 		cm.SetActiveCamera(cameraEntity);
-		em.ForEach([&](yasp::Entity e, yasp::gpu_components::VertexShader& vertexShaderId)
-		{
-			auto vertexShader = pipe->GetShader(vertexShaderId);
+		//em.ForEach([&](yasp::Entity e, yasp::gpu_components::VertexShader& vertexShaderId)
+		//{
+		//	auto vertexShader = pipe->GetShader(vertexShaderId);
 
-			vertexShader.OnEachBuffer([&](yasp::GPUBuffer buffer)
-			{
-				buffer.OnEachElement([&](const std::string& identifier, yasp::AssignableMemory bufferSegment)
-				{
-					em.Request(identifier, e, bufferSegment);
-				});
-				buffer.Update();
-			});
+		//	vertexShader.OnEachBuffer([&](yasp::GPUBuffer buffer)
+		//	{
+		//		buffer.OnEachElement([&](const std::string& identifier, yasp::AssignableMemory bufferSegment)
+		//		{
+		//			em.Request(identifier, e, bufferSegment);
+		//		});
+		//		buffer.Update();
+		//	});
 
-			renderContext.Draw(36, 0);
-			
-		});
-		 
-		pipe->SetVertexBuffer(floorbuffer, sizeof(Vertex), 0);
-		auto floorMVP =  view * projection;
-		auto newmat = ~(floorMVP);
-		auto ident = yasp::mat4::Identity();
-		vshader["EntityBuffer"]["WorldViewProjectionMatrix"] = newmat;
-		vshader["EntityBuffer"].Update();
-		vshader["WorldBuffer"]["WorldMatrix"] = ident;
-		vshader["WorldBuffer"]["RotationMatrix"] = ident;
-		vshader["WorldBuffer"].Update();
-		pipe->SetShaderTextureViews(yasp::ShaderType::PIXEL, &srvFloor, 0, 1);
+		//	renderContext.Draw(36, 0);
+		//	
+		//});
+		ImGui::Text("Hello Imgui Rendered with Yasp!");
+		ImGui::Text("The text is a bit weird though, but it works!");
+		//pipe->SetVertexBuffer(floorbuffer, sizeof(Vertex), 0);
+		//auto floorMVP =  view * projection;
+		//auto newmat = ~(floorMVP);
+		//auto ident = yasp::mat4::Identity();
+		//vshader["EntityBuffer"]["WorldViewProjectionMatrix"] = newmat;
+		//vshader["EntityBuffer"].Update();
+		//vshader["WorldBuffer"]["WorldMatrix"] = ident;
+		//vshader["WorldBuffer"]["RotationMatrix"] = ident;
+		//vshader["WorldBuffer"].Update();
+		//pipe->SetShaderTextureViews(yasp::ShaderType::PIXEL, &srvFloor, 0, 1);
 
-		pshader.Bind();
-		renderContext.Draw(6, 0);
-		
+		//pshader.Bind();
+	//	renderContext.Draw(6, 0);
+		ImGui::Render();
+		ImGui_ImplYasp_RenderDrawData(ImGui::GetDrawData());
+		ImGui::EndFrame();
 		renderContext.Display();
 	}
+	ImGui_ImplYasp_Shutdown();
+	ImGui::DestroyContext();
 	return 0;
 }

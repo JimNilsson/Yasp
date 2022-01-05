@@ -29,6 +29,11 @@ void yasp::GPUBuffer::Update()
 	resourceManager->UpdateBuffer(*this);
 }
 
+void yasp::GPUBuffer::Stage(void * data, size_t size, size_t offset)
+{
+	resourceManager->StageBuffer(*this, data, size, offset);
+}
+
 void yasp::GPUBuffer::OnEachElement(std::function<void(const std::string&, AssignableMemory)> callback)
 {
 	auto count = resourceManager->GetBufferElementCount(*this);

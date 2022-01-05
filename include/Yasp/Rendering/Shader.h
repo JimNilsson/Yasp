@@ -12,10 +12,11 @@ namespace yasp
 	class Shader : public GPUResourceID
 	{
 	public:
+		Shader() : GPUResourceID(), shader(nullptr) {}
 		Shader(uint32_t id, IShader* shader) : GPUResourceID(id), shader(shader) {}
 		~Shader()
 		{
-			if (*(this->refCount) == 2)
+			if (this->refCount != nullptr && *(this->refCount) == 2)
 				delete shader;
 		}
 		Shader(const Shader& other) : GPUResourceID(other), shader(other.shader) {}

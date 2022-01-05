@@ -65,10 +65,13 @@ namespace yasp
 		FillMode fillMode = FillMode::SOLID;
 		CullMode cullMode = CullMode::BACK;
 		WindingOrder windingOrder = WindingOrder::CLOCKWISE;
+		bool enableScissor = false;
+		bool enableDepthClip = true;
 	};
 
 	struct BlendRenderTarget
 	{
+		bool enable = false;
 		BlendFactor srcBlend = BlendFactor::ONE;
 		BlendFactor destBlend = BlendFactor::ZERO;
 		BlendFactor srcBlendAlpha = BlendFactor::ONE;
@@ -80,19 +83,26 @@ namespace yasp
 	struct BlendStateDesc
 	{
 		bool independentBlending = false;
+		bool alphaToCoverage = false;
 		BlendRenderTarget renderTargetBlend[8];
 	};
 
 	struct DepthStencilDesc
 	{
-		bool performTest;
-		DepthWriteMask depthWriteMask;
-		ComparisonFunc comparisonMode;
-		bool writeStencil;
-		uint8 stencilReadMask;
-		uint8 stencilWriteMask;
-		StencilOp onFrontFace;
-		StencilOp onBackFace;
+		bool stencilTest = false;
+		DepthWriteMask depthWriteMask = DepthWriteMask::ALL;
+		ComparisonFunc comparisonMode = ComparisonFunc::LESS;
+		bool depthTest = true;
+		uint8 stencilReadMask = 0xff;
+		uint8 stencilWriteMask = 0xff;
+		StencilOp onFrontFaceFail = StencilOp::KEEP;
+		StencilOp onFrontFaceDepthFail = StencilOp::KEEP;;
+		StencilOp onFrontFacePass = StencilOp::KEEP;;
+		ComparisonFunc frontFaceComparison = ComparisonFunc::ALWAYS;;
+		StencilOp onBackFaceFail = StencilOp::KEEP;;
+		StencilOp onBackFaceDepthFail = StencilOp::KEEP;;
+		StencilOp onBackFacePass = StencilOp::KEEP;;
+		ComparisonFunc backFaceComparison = ComparisonFunc::ALWAYS;
 	};
 
 	struct Viewport

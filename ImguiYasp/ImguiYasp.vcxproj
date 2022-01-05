@@ -166,6 +166,7 @@
     <ClCompile Include="..\src\ImguiYasp\ImguiYasp.cpp" />
     <ClCompile Include="..\src\ImguiYasp\imgui_demo.cpp" />
     <ClCompile Include="..\src\ImguiYasp\imgui_draw.cpp" />
+    <ClCompile Include="..\src\ImguiYasp\imgui_impl_win32.cpp" />
     <ClCompile Include="..\src\ImguiYasp\imgui_tables.cpp" />
     <ClCompile Include="..\src\ImguiYasp\imgui_widgets.cpp" />
   </ItemGroup>
@@ -173,6 +174,7 @@
     <ClInclude Include="..\include\Yasp\ImguiYasp\imconfig.h" />
     <ClInclude Include="..\include\Yasp\ImguiYasp\imgui.h" />
     <ClInclude Include="..\include\Yasp\ImguiYasp\ImguiYasp.h" />
+    <ClInclude Include="..\include\Yasp\ImguiYasp\imgui_impl_win32.h" />
     <ClInclude Include="..\include\Yasp\ImguiYasp\imgui_internal.h" />
     <ClInclude Include="..\include\Yasp\ImguiYasp\imstb_rectpack.h" />
     <ClInclude Include="..\include\Yasp\ImguiYasp\imstb_textedit.h" />
