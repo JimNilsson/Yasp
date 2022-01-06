@@ -32,6 +32,7 @@ namespace yasp
 		HWND windowHandle;
 		ID3D11Device * device;
 		ID3D11DeviceContext* deviceContext;
+		ID3D11Debug* debug;
 		IDXGISwapChain* swapChain;
 		ID3D11DepthStencilView* backbufferDSV;
 		ID3D11RenderTargetView* backbufferRTV;

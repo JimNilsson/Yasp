@@ -65,7 +65,7 @@ int main(int argc, char** argv)
 
 	yasp::Entity e = {};
 	std::vector<yasp::Entity> entities;
-	for (int i = 0; i < 500; i++)
+	for (int i = 0; i < 50; i++)
 	{
 		auto ent = em.Create();
 		e = ent;
@@ -118,7 +118,7 @@ int main(int argc, char** argv)
 	auto pshader = pipe->CreatePixelShader("SimplePS.hlsl");
 	auto rasterizer = pipe->CreateRasterizer({
 		yasp::FillMode::SOLID,
-		yasp::CullMode::NONE,
+		yasp::CullMode::BACK,
 		yasp::WindingOrder::CLOCKWISE
 	});
 
@@ -145,11 +145,11 @@ int main(int argc, char** argv)
 		Vertex({ yasp::float3(-0.5f, 0.5f, 0.5f), yasp::float3(0.0f,1.0f,0.0f), yasp::float2(1.0f, 0.0f) }),
 
 		// Z+
-		Vertex({ yasp::float3(-0.5f, -0.5f, 0.5f), yasp::float3(0.0f,0.0f,1.0f), yasp::float2(0.0f, 0.0f) }),
+		Vertex({ yasp::float3(0.5f, 0.5f, 0.5f), yasp::float3(0.0f,0.0f,1.0f), yasp::float2(1.0f, 1.0f) }),
 		Vertex({ yasp::float3(-0.5f, 0.5f, 0.5f), yasp::float3(0.0f,0.0f,1.0f), yasp::float2(0.0f, 1.0f) }),
-		Vertex({ yasp::float3(0.5f, 0.5f, 0.5f), yasp::float3(0.0f,0.0f,1.0f), yasp::float2(1.0f, 1.0f) }),
 		Vertex({ yasp::float3(-0.5f, -0.5f, 0.5f), yasp::float3(0.0f,0.0f,1.0f), yasp::float2(0.0f, 0.0f) }),
 		Vertex({ yasp::float3(0.5f, 0.5f, 0.5f), yasp::float3(0.0f,0.0f,1.0f), yasp::float2(1.0f, 1.0f) }),
+		Vertex({ yasp::float3(-0.5f, -0.5f, 0.5f), yasp::float3(0.0f,0.0f,1.0f), yasp::float2(0.0f, 0.0f) }),
 		Vertex({ yasp::float3(0.5f, -0.5f, 0.5f), yasp::float3(0.0f,0.0f,1.0f), yasp::float2(1.0f, 0.0f) }),
 
 		// X+
@@ -161,12 +161,12 @@ int main(int argc, char** argv)
 		Vertex({ yasp::float3(0.5f, 0.5f, -0.5f), yasp::float3(1.0f,0.0f,0.0f), yasp::float2(1.0f, 0.0f) }),
 		
 		// Y-
+		Vertex({ yasp::float3(0.5f, -0.5f, -0.5f), yasp::float3(0.0f,-1.0f,0.0f), yasp::float2(1.0f, 0.0f) }),
+		Vertex({ yasp::float3(-0.5f, -0.5f, 0.5f), yasp::float3(0.0f,-1.0f,0.0f), yasp::float2(0.0f, 1.0f) }),
 		Vertex({ yasp::float3(-0.5f, -0.5f, -0.5f), yasp::float3(0.0f,-1.0f,0.0f), yasp::float2(0.0f, 0.0f) }),
-		Vertex({ yasp::float3(-0.5f, -0.5f, 0.5f), yasp::float3(0.0f,-1.0f,0.0f), yasp::float2(0.0f, 1.0f) }),
 		Vertex({ yasp::float3(0.5f, -0.5f, -0.5f), yasp::float3(0.0f,-1.0f,0.0f), yasp::float2(1.0f, 0.0f) }),
-		Vertex({ yasp::float3(-0.5f, -0.5f, 0.5f), yasp::float3(0.0f,-1.0f,0.0f), yasp::float2(0.0f, 1.0f) }),
 		Vertex({ yasp::float3(0.5f, -0.5f, 0.5f), yasp::float3(0.0f,-1.0f,0.0f), yasp::float2(1.0f,1.0f) }),
-		Vertex({ yasp::float3(0.5f, -0.5f, -0.5f), yasp::float3(0.0f,-1.0f,0.0f), yasp::float2(1.0f, 0.0f) }),
+		Vertex({ yasp::float3(-0.5f, -0.5f, 0.5f), yasp::float3(0.0f,-1.0f,0.0f), yasp::float2(0.0f, 1.0f) }),
 
 		// Z-
 		Vertex({ yasp::float3(0.5f, 0.5f, -0.5f), yasp::float3(0.0f,0.0f,-1.0f), yasp::float2(0.0f, 0.0f) }),
@@ -175,14 +175,15 @@ int main(int argc, char** argv)
 		Vertex({ yasp::float3(0.5f, 0.5f, -0.5f), yasp::float3(0.0f,0.0f,-1.0f), yasp::float2(0.0f, 0.0f) }),
 		Vertex({ yasp::float3(-0.5f, -0.5f, -0.5f), yasp::float3(0.0f,0.0f,-1.0f), yasp::float2(1.0f, 1.0f) }),
 		Vertex({ yasp::float3(-0.5f, 0.5f, -0.5f), yasp::float3(0.0f,0.0f,-1.0f), yasp::float2(1.0f, 0.0f) }),
-
+		
+		
 		// X-
 		Vertex({ yasp::float3(-0.5f, 0.5f, 0.5f), yasp::float3(-1.0f,0.0f,0.0f), yasp::float2(0.0f, 0.0f) }),
-		Vertex({ yasp::float3(-0.5f, -0.5f, 0.5f), yasp::float3(-1.0f,0.0f,0.0f), yasp::float2(0.0f, 1.0f) }),
 		Vertex({ yasp::float3(-0.5f, 0.5f, -0.5f), yasp::float3(-1.0f,0.0f,0.0f), yasp::float2(1.0f, 1.0f) }),
+		Vertex({ yasp::float3(-0.5f, -0.5f, 0.5f), yasp::float3(-1.0f,0.0f,0.0f), yasp::float2(0.0f, 1.0f) }),
 		Vertex({ yasp::float3(-0.5f, -0.5f, -0.5f), yasp::float3(-1.0f,0.0f,0.0f), yasp::float2(0.0f, 0.0f) }),
-		Vertex({ yasp::float3(-0.5f, 0.5f,-0.5f), yasp::float3(-1.0f,0.0f,0.0f), yasp::float2(1.0f, 1.0f) }),
 		Vertex({ yasp::float3(-0.5f, -0.5f, 0.5f), yasp::float3(-1.0f,0.0f,0.0f), yasp::float2(1.0f, 0.0f) }),
+		Vertex({ yasp::float3(-0.5f, 0.5f,-0.5f), yasp::float3(-1.0f,0.0f,0.0f), yasp::float2(1.0f, 1.0f) })		
 	};
 
 	bd.bind = yasp::BIND_VERTEX_BUFFER;
@@ -197,8 +198,8 @@ int main(int argc, char** argv)
 		Vertex({ yasp::float3(-10.0f, 0.0f, 10.0f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(30.0f, 0.0f) }),
 		Vertex({ yasp::float3(10.0f, 0.0f, -10.0f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(0.0f, 30.0f) }),
 		Vertex({ yasp::float3(10.0f, 0.0f, 10.0f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(30.0f, 30.0f) }),
-		Vertex({ yasp::float3(-10.0f, 0.0f, 10.0f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(30.0f, 0.0f) }),
-		Vertex({ yasp::float3(10.0f, 0.0f, -10.0f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(0.0f, 30.0f) }),
+		Vertex({ yasp::float3(10.0f, 0.0f, -10.0f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(30.0f, 0.0f) }),
+		Vertex({ yasp::float3(-10.0f, 0.0f, 10.0f),yasp::float3(0.0f,1.0f,0.0f), yasp::float2(0.0f, 30.0f) }),
 	};
 
 	bd.size = 6 * sizeof(Vertex);
@@ -380,37 +381,42 @@ int main(int argc, char** argv)
 		em.Update(cameraEntity, yasp::Position(pos.xyz, 1.0f), yasp::Rotation(cameraRotation.x, cameraRotation.y, cameraRotation.z, cameraRotation.w));
 		em.FireUpdateCallbacks();
 		cm.SetActiveCamera(cameraEntity);
-		//em.ForEach([&](yasp::Entity e, yasp::gpu_components::VertexShader& vertexShaderId)
-		//{
-		//	auto vertexShader = pipe->GetShader(vertexShaderId);
+		em.ForEach([&](yasp::Entity e, yasp::gpu_components::VertexShader& vertexShaderId)
+		{
+			auto vertexShader = pipe->GetShader(vertexShaderId);
 
-		//	vertexShader.OnEachBuffer([&](yasp::GPUBuffer buffer)
-		//	{
-		//		buffer.OnEachElement([&](const std::string& identifier, yasp::AssignableMemory bufferSegment)
-		//		{
-		//			em.Request(identifier, e, bufferSegment);
-		//		});
-		//		buffer.Update();
-		//	});
+			vertexShader.OnEachBuffer([&](yasp::GPUBuffer buffer)
+			{
+				buffer.OnEachElement([&](const std::string& identifier, yasp::AssignableMemory bufferSegment)
+				{
+					em.Request(identifier, e, bufferSegment);
+				});
+				buffer.Update();
+			});
 
-		//	renderContext.Draw(36, 0);
-		//	
-		//});
+			renderContext.Draw(36, 0);
+			
+		});
 		ImGui::Text("Hello Imgui Rendered with Yasp!");
-		ImGui::Text("The text is a bit weird though, but it works!");
-		//pipe->SetVertexBuffer(floorbuffer, sizeof(Vertex), 0);
-		//auto floorMVP =  view * projection;
-		//auto newmat = ~(floorMVP);
-		//auto ident = yasp::mat4::Identity();
-		//vshader["EntityBuffer"]["WorldViewProjectionMatrix"] = newmat;
-		//vshader["EntityBuffer"].Update();
-		//vshader["WorldBuffer"]["WorldMatrix"] = ident;
-		//vshader["WorldBuffer"]["RotationMatrix"] = ident;
-		//vshader["WorldBuffer"].Update();
-		//pipe->SetShaderTextureViews(yasp::ShaderType::PIXEL, &srvFloor, 0, 1);
+		ImGui::Text("The text is no longer weird since fixing the input layout!");
+		if (ImGui::Button("Gotta get inputs working..."))
+		{
+			em.Destroy(entities.back());
+			entities.pop_back();
+		}
+		pipe->SetVertexBuffer(floorbuffer, sizeof(Vertex), 0);
+		auto floorMVP =  view * projection;
+		auto newmat = ~(floorMVP);
+		auto ident = yasp::mat4::Identity();
+		vshader["EntityBuffer"]["WorldViewProjectionMatrix"] = newmat;
+		vshader["EntityBuffer"].Update();
+		vshader["WorldBuffer"]["WorldMatrix"] = ident;
+		vshader["WorldBuffer"]["RotationMatrix"] = ident;
+		vshader["WorldBuffer"].Update();
+		pipe->SetShaderTextureViews(yasp::ShaderType::PIXEL, &srvFloor, 0, 1);
 
-		//pshader.Bind();
-	//	renderContext.Draw(6, 0);
+		pshader.Bind();
+		renderContext.Draw(6, 0);
 		ImGui::Render();
 		ImGui_ImplYasp_RenderDrawData(ImGui::GetDrawData());
 		ImGui::EndFrame();

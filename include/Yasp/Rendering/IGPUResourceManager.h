@@ -32,12 +32,7 @@ namespace yasp
 		virtual GPUResourceID CreateSampler(const SamplerDesc& samplerDesc) = 0;
 		virtual GPUResourceID CreateDepthStencilState(const DepthStencilDesc& depthStencilDesc) = 0;
 		virtual GPUResourceID CreateBlendState(const BlendStateDesc& blendStateDesc) = 0;
-	/*	virtual GPUResourceID CreateTexture(TextureDesc textureDesc) = 0;
-		virtual GPUResourceID CreateTextureView(TextureViewDesc textureViewDesc, GPUResourceID texture) = 0;
-		virtual GPUResourceID CreateShader(ShaderDesc shaderDesc) = 0;
-
-		
-		virtual GPUResourceID CreateDepthTest(DepthStencilDesc depthTestDesc) = 0;
+		/*	
 		virtual GPUResourceID CreateDepthStencil(DepthStencilViewDesc depthStencilDesc) = 0;
 		virtual GPUResourceID CreateRenderTarget(RenderTargetDesc renderTargetDesc) = 0;*/
 
@@ -45,6 +40,9 @@ namespace yasp
 		virtual void StageBuffer(const GPUResourceID& id, void* data, size_t size, size_t offset = 0) = 0;
 		virtual void UpdateBuffer(const GPUResourceID& id) = 0;
 		virtual AssignableMemory GetBufferSegment(const GPUResourceID& id, const std::string& identifier) = 0;
+
+		virtual void PushState() = 0;
+		virtual void PopState() = 0;
 
 		virtual void SetVertexBuffer(const GPUResourceID& id, uint32 stride, uint32 offset) = 0;
 		virtual void SetIndexBuffer(const GPUResourceID& id, IndexFormat format, uint32 offset) = 0;

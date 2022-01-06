@@ -14,9 +14,12 @@ yasp::RenderContextD3D::~RenderContextD3D()
 {
 	backbufferDSV->Release();
 	backbufferRTV->Release();
+	debug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL | D3D11_RLDO_IGNORE_INTERNAL);
+	debug->Release();
 	deviceContext->Release();
 	swapChain->Release();
 	device->Release();
+	
 }
 
 void yasp::RenderContextD3D::Clear()
@@ -106,6 +109,7 @@ void yasp::RenderContextD3D::CreateSwapChain()
 	D3D_FEATURE_LEVEL featureLevel;
 	HRESULT hr = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_DEBUG, levels, 2, D3D11_SDK_VERSION, &scd, &swapChain, &device, &featureLevel, &deviceContext);
 	assert(SUCCEEDED(hr));
+	device->QueryInterface(__uuidof(ID3D11Debug), reinterpret_cast<void**>(&debug));
 }
 
 void yasp::RenderContextD3D::CreateBackBuffer()

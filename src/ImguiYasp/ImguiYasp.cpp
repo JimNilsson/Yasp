@@ -20,19 +20,19 @@ struct ImguiRenderData {
 	yasp::GPUResourceID rasterizer;
 	yasp::GPUResourceID depthStencilState;
 	yasp::GPUResourceID blendState;
-	size_t vertexBufferSize;
 };
 
 ImguiRenderData renderData;
 
 IMGUI_IMPL_API bool ImGui_ImplYasp_Init(yasp::Window & window, yasp::RenderContext & renderContext)
 {
+	
 	imguiRenderContext = &renderContext;
 	resourceManager = imguiRenderContext->ResourceManager();
 	//imguiWindow = &window;
 
 	ImGui_ImplWin32_Init(window.GetWindowHandle());
-
+	
 
 	yasp::BufferDesc vertexBufferDesc = {
 		10000,
@@ -49,7 +49,7 @@ IMGUI_IMPL_API bool ImGui_ImplYasp_Init(yasp::Window & window, yasp::RenderConte
 		yasp::Usage::GPU_READ_CPU_WRITE
 	};
 	renderData.indexBuffer = resourceManager->CreateBuffer(indexBufferDesc, nullptr);
-
+	
 	static const char* imguiVertexShaderCode =
 		"cbuffer cameraBuffer : register(b0) \
             {\
@@ -94,12 +94,12 @@ IMGUI_IMPL_API bool ImGui_ImplYasp_Init(yasp::Window & window, yasp::RenderConte
 
 	renderData.depthStencilState = resourceManager->CreateDepthStencilState(dsd);
 
-
+	
 	ImGuiIO& io = ImGui::GetIO();
 	uint8_t* pixels = nullptr;
 	int32_t width, height;
 	io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-
+	
 	yasp::Texture2DDesc texDesc;
 	texDesc.width = width;
 	texDesc.height = height;
@@ -112,14 +112,14 @@ IMGUI_IMPL_API bool ImGui_ImplYasp_Init(yasp::Window & window, yasp::RenderConte
 	texDesc.sampleQuality = 0;
 
 	auto texture = resourceManager->CreateTexture2D(texDesc, pixels);
-
-	delete[] pixels;
+	
 	yasp::Texture2DViewDesc tvd;
 	tvd.format = yasp::TextureFormat::UNORM8_4;
 	tvd.mipLevels = 1;
 	tvd.mostDetailedMip = 0;
 	renderData.fontTexture = resourceManager->CreateTexture2DView(tvd, texture);
-
+	texture.Release();
+	
 	yasp::SamplerDesc sd;
 	sd.filter = yasp::TextureFilter::TRILINEAR;
 	sd.wrapModeU = yasp::TextureWrapping::REPEAT;
@@ -132,7 +132,7 @@ IMGUI_IMPL_API bool ImGui_ImplYasp_Init(yasp::Window & window, yasp::RenderConte
 	sd.maxLOD = 0.0f;
 	
 	renderData.fontSampler = resourceManager->CreateSampler(sd);
-
+	
 	static const char* imguiPixelShaderCode =
 		"struct PS_INPUT\
             {\
@@ -150,10 +150,9 @@ IMGUI_IMPL_API bool ImGui_ImplYasp_Init(yasp::Window & window, yasp::RenderConte
             }";
 
 	renderData.pixelShader = resourceManager->CreatePixelShader(imguiPixelShaderCode, strlen(imguiPixelShaderCode));
-
 	renderData.pixelShader["fontSampler"] = renderData.fontSampler;
 	renderData.pixelShader["fontTexture"] = renderData.fontTexture;
-
+	
 	yasp::BlendStateDesc bsd;
 	bsd.alphaToCoverage = false;
 	bsd.alphaToCoverage = false;
@@ -164,9 +163,7 @@ IMGUI_IMPL_API bool ImGui_ImplYasp_Init(yasp::Window & window, yasp::RenderConte
 	bsd.renderTargetBlend[0].srcBlendAlpha = yasp::BlendFactor::ONE;
 	bsd.renderTargetBlend[0].destBlendAlpha = yasp::BlendFactor::INV_SRC_ALPHA;
 	bsd.renderTargetBlend[0].blendOpAlpha = yasp::BlendOp::ADD;
-
 	renderData.blendState = resourceManager->CreateBlendState(bsd);
-
 
 	return true;
 }
@@ -174,6 +171,15 @@ IMGUI_IMPL_API bool ImGui_ImplYasp_Init(yasp::Window & window, yasp::RenderConte
 IMGUI_IMPL_API void ImGui_ImplYasp_Shutdown()
 {
 	ImGui_ImplWin32_Shutdown();
+	renderData.vertexBuffer.Release();
+	renderData.indexBuffer.Release();
+	renderData.vertexShader.Release();
+	renderData.pixelShader.Release();
+	renderData.fontSampler.Release();
+	renderData.fontTexture.Release();
+	renderData.rasterizer.Release();
+	renderData.depthStencilState.Release();
+	renderData.blendState.Release();
 	return IMGUI_IMPL_API void();
 }
 
@@ -189,6 +195,18 @@ IMGUI_IMPL_API void ImGui_ImplYasp_RenderDrawData(ImDrawData * drawData)
 	{
 		return;
 	}
+	resourceManager->PushState();
+
+	yasp::Viewport vp;
+	vp.width = drawData->DisplaySize.x;
+	vp.height = drawData->DisplaySize.y;
+	vp.minDepth = 0.0f;
+	vp.maxDepth = 1.0f;
+	vp.topLeftX = 0.0f;
+	vp.topLeftY = 0.0f;
+	imguiRenderContext->SetViewport(vp);
+	imguiRenderContext->SetTopology(yasp::Topology::TRIANGLE_LIST);
+
 	size_t vtxOffset = 0;
 	size_t idxOffset = 0;
 	for (int n = 0; n < drawData->CmdListsCount; n++)
@@ -214,16 +232,18 @@ IMGUI_IMPL_API void ImGui_ImplYasp_RenderDrawData(ImDrawData * drawData)
 	};
 	renderData.vertexShader["cameraBuffer"]["ProjectionMatrix"] = projMatrix;
 	renderData.vertexShader["cameraBuffer"].Update();
-
+	
 	resourceManager->SetVertexBuffer(renderData.vertexBuffer, sizeof(ImDrawVert), 0);
 	resourceManager->SetIndexBuffer(renderData.indexBuffer, yasp::IndexFormat::UINT16, 0);
 	renderData.vertexShader.Bind();
 	renderData.pixelShader.Bind();
-	resourceManager->SetRasterizer(renderData.rasterizer);
+	
 	const float blendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	resourceManager->SetBlendState(renderData.blendState, blendFactor, 0xffffffff);
 	resourceManager->SetDepthStencilState(renderData.depthStencilState, 0);
+	resourceManager->SetRasterizer(renderData.rasterizer);
 	
 	imguiRenderContext->DrawIndexed(idxOffset / sizeof(ImDrawIdx), 0, 0);
+	resourceManager->PopState();
 	return IMGUI_IMPL_API void();
 }

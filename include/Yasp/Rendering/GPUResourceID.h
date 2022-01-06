@@ -50,6 +50,13 @@ namespace yasp
 			return *this;
 		}
 
+		void Release()
+		{
+			Decrement();
+			this->refCount = nullptr;
+			this->uid = 0;
+		}
+
 		virtual uint32 ID() const { return uid; }
 		
 		virtual bool operator==(const GPUResourceID& rhs) const { return rhs.uid == this->uid; }

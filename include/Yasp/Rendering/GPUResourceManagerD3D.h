@@ -41,6 +41,9 @@ namespace yasp
 		AssignableMemory GetBufferSegment(const GPUResourceID& id, const std::string& identifier) override final;
 		AssignableMemory GetBufferSegment(const GPUResourceID& id, size_t offset) override final;
 
+		void PushState() override final;
+		void PopState() override final;
+
 		void SetVertexBuffer(const GPUResourceID& id, uint32 stride, uint32 offset) override final;
 		void SetIndexBuffer(const GPUResourceID& id, IndexFormat format, uint32 offset) override final;
 		void SetShaderBuffers(ShaderType shader, GPUResourceID* buffers, uint32 startSlot, uint32 count) override final;
@@ -98,6 +101,70 @@ namespace yasp
 		};
 		uint32 resourceCounter;
 		std::unordered_map<GPUResourceID, GPUResourceD3D, GPUResourceID::Hasher> resourceMap;
+		struct D3DStateBackup
+		{
+			D3D11_PRIMITIVE_TOPOLOGY topology;
+			ID3D11InputLayout* inputLayout;
+			ID3D11Buffer* vertexBuffers[8] = {};
+			UINT vertexBufferStrides[8] = {};
+			UINT vertexBufferOffsets[8] = {};
+			ID3D11Buffer* indexBuffer = nullptr;
+			DXGI_FORMAT indexFormat = {};
+			UINT indexOffset = 0;
+			ID3D11Buffer* vsBuffers[8] = {};
+			ID3D11SamplerState* vsSamplers[8] = {};
+			ID3D11VertexShader* vshader = nullptr;
+			UINT vsClassInstanceCount = 0;
+			ID3D11ClassInstance* vsClassInstances[256] = {};
+			ID3D11ShaderResourceView* vsResources[8] = {};
+			ID3D11RasterizerState* rasterizer = nullptr;
+			D3D11_RECT scissorRects[D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE];
+			UINT scissorRectsCount = D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
+			D3D11_VIEWPORT viewPorts[D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE];
+			UINT viewPortsCount = D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
+			ID3D11PixelShader* pshader = nullptr;
+			ID3D11ClassInstance* psClassInstances[256];
+			UINT psClassInstanceCount = 0;
+			ID3D11Buffer* psBuffers[8] = {};
+			ID3D11SamplerState* psSamplers[8] = {};
+			ID3D11ShaderResourceView* psResources[8] = {};
+			ID3D11BlendState* blendState = nullptr;
+			FLOAT blendFactor[4] = {};
+			UINT sampleMask = 0;
+			ID3D11DepthStencilState* depthStencilState = nullptr;
+			UINT stencilRef = 0;
+			ID3D11UnorderedAccessView* unorderedAccessViews[8] = {};
+			ID3D11RenderTargetView* renderTargetViews[8] = {};
+			ID3D11DepthStencilView* depthStencilView = nullptr;
+
+			~D3DStateBackup()
+			{
+				if (inputLayout) inputLayout->Release();
+				for (auto& vb : vertexBuffers) if (vb) vb->Release();
+				if (indexBuffer) indexBuffer->Release();
+
+				for (auto& b : vsBuffers) if (b) b->Release();
+				for (auto& b : vsSamplers) if (b) b->Release();
+				for (auto& b : vsResources) if (b) b->Release();
+				if (vshader) vshader->Release();
+				for (auto& b : vsClassInstances) if (b) b->Release();
+
+				if (rasterizer) rasterizer->Release();
+
+				for (auto& b : psBuffers) if (b) b->Release();
+				for (auto& b : psSamplers) if (b) b->Release();
+				for (auto& b : psResources) if (b) b->Release();
+				if (pshader) pshader->Release();
+				for (auto& b : psClassInstances) if (b) b->Release();
+
+				if (blendState) blendState->Release();
+				for (auto& b : unorderedAccessViews) if (b) b->Release();
+				for (auto& b : renderTargetViews) if (b) b->Release();
+				if (depthStencilState) depthStencilState->Release();
+				if (depthStencilView) depthStencilView->Release();
+			}
+		};
+		std::vector<D3DStateBackup> backups;
 	};
 };
 

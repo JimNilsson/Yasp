@@ -154,9 +154,15 @@ yasp::Shader yasp::GPUResourceManagerD3D::CreateVertexShader(const void * shader
 	HRESULT hr = D3DCompile(shaderSourceCode, shaderSourceSize, nullptr, nullptr, nullptr, "main", "vs_5_0", D3DCOMPILE_OPTIMIZATION_LEVEL3, 0, &shaderCode, &errors);
 	if (FAILED(hr))
 	{
-		throw std::exception(static_cast<char*>(errors->GetBufferPointer()));
+		if (errors != nullptr)
+		{
+			auto exception = std::exception(static_cast<char*>(errors->GetBufferPointer()));
+			errors->Release();
+			throw exception;
+		}
+		throw std::exception("Failed to create vertex shader");
 	}
-
+	
 	ID3D11VertexShader* vertexShader;
 	hr = device->CreateVertexShader(shaderCode->GetBufferPointer(), shaderCode->GetBufferSize(), nullptr, &vertexShader);
 	if (FAILED(hr))
@@ -620,6 +626,64 @@ yasp::AssignableMemory yasp::GPUResourceManagerD3D::GetBufferSegment(const GPURe
 	throw std::exception("GetBufferSegment GPU resource ID not found");
 }
 
+void yasp::GPUResourceManagerD3D::PushState()
+{
+	backups.push_back({});
+	D3DStateBackup& backup = backups.back();
+	deviceContext->IAGetVertexBuffers(0, 8, backup.vertexBuffers, backup.vertexBufferStrides, backup.vertexBufferOffsets);
+	deviceContext->IAGetPrimitiveTopology(&backup.topology);
+	deviceContext->IAGetInputLayout(&backup.inputLayout);
+	deviceContext->IAGetIndexBuffer(&backup.indexBuffer, &backup.indexFormat, &backup.indexOffset);
+
+	deviceContext->VSGetConstantBuffers(0, 8, backup.vsBuffers);
+	deviceContext->VSGetSamplers(0, 8, backup.vsSamplers);
+	deviceContext->VSGetShader(&backup.vshader, backup.vsClassInstances, &backup.vsClassInstanceCount);
+	deviceContext->VSGetShaderResources(0, 8, backup.vsResources);
+	// TODO Hull, Domain, Geometry, Compute, UAVS
+
+	deviceContext->RSGetState(&backup.rasterizer);
+	deviceContext->RSGetScissorRects(&backup.scissorRectsCount, backup.scissorRects);
+	deviceContext->RSGetViewports(&backup.viewPortsCount, backup.viewPorts);
+
+	deviceContext->PSGetShader(&backup.pshader, backup.vsClassInstances, &backup.psClassInstanceCount);
+	deviceContext->PSGetConstantBuffers(0, 8, backup.psBuffers);
+	deviceContext->PSGetSamplers(0, 8, backup.psSamplers);
+	deviceContext->PSGetShaderResources(0, 8, backup.psResources);
+
+	deviceContext->OMGetBlendState(&backup.blendState, backup.blendFactor, &backup.sampleMask);
+	deviceContext->OMGetDepthStencilState(&backup.depthStencilState, &backup.stencilRef);
+	deviceContext->OMGetRenderTargets(8, backup.renderTargetViews, &backup.depthStencilView);
+}
+
+void yasp::GPUResourceManagerD3D::PopState()
+{
+	D3DStateBackup& backup = backups.back();
+	deviceContext->IASetVertexBuffers(0, 8, backup.vertexBuffers, backup.vertexBufferStrides, backup.vertexBufferOffsets);
+	deviceContext->IASetPrimitiveTopology(backup.topology);
+	deviceContext->IASetInputLayout(backup.inputLayout);
+	deviceContext->IASetIndexBuffer(backup.indexBuffer, backup.indexFormat, backup.indexOffset);
+
+	deviceContext->VSSetConstantBuffers(0, 8, backup.vsBuffers);
+	deviceContext->VSSetSamplers(0, 8, backup.vsSamplers);
+	deviceContext->VSSetShaderResources(0, 8, backup.vsResources);
+	deviceContext->VSSetShader(backup.vshader, backup.vsClassInstances, backup.vsClassInstanceCount);
+
+	deviceContext->RSSetState(backup.rasterizer);
+	deviceContext->RSSetScissorRects(backup.scissorRectsCount, backup.scissorRects);
+	deviceContext->RSSetViewports(backup.viewPortsCount, backup.viewPorts);
+
+	deviceContext->PSSetShader(backup.pshader, backup.psClassInstances, backup.psClassInstanceCount);
+	deviceContext->PSSetConstantBuffers(0, 8, backup.psBuffers);
+	deviceContext->PSSetShaderResources(0, 8, backup.psResources);
+	deviceContext->PSSetSamplers(0, 8, backup.psSamplers);
+
+	deviceContext->OMSetBlendState(backup.blendState, backup.blendFactor, backup.sampleMask);
+	deviceContext->OMSetDepthStencilState(backup.depthStencilState, backup.stencilRef);
+	deviceContext->OMSetRenderTargets(8, backup.renderTargetViews, backup.depthStencilView);
+	
+	backups.pop_back();
+}
+
 void yasp::GPUResourceManagerD3D::SetVertexBuffer(const GPUResourceID& id, uint32 stride, uint32 offset)
 {
 	if (auto f = resourceMap.find(id); f != resourceMap.end())
@@ -816,10 +880,9 @@ void yasp::GPUResourceManagerD3D::VertexShaderReflection(ID3DBlob * shaderCode, 
 		inputElementDesc.InputSlot = 0;
 		inputElementDesc.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 		inputElementDesc.InstanceDataStepRate = 0;
-
+		const std::string semName(inputElementDesc.SemanticName);
 		if (signatureParamaterDesc.Mask == 1)
 		{
-			const std::string semName(inputElementDesc.SemanticName);
 			if (semName == "SV_InstanceID")
 				continue;
 			if (semName == "SV_VertexID")
@@ -856,7 +919,10 @@ void yasp::GPUResourceManagerD3D::VertexShaderReflection(ID3DBlob * shaderCode, 
 		else if (signatureParamaterDesc.Mask <= 15)
 		{
 			if (signatureParamaterDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32)
-				inputElementDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+				if(semName != "COLOR")
+					inputElementDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+				else
+					inputElementDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 			else if (signatureParamaterDesc.ComponentType == D3D_REGISTER_COMPONENT_SINT32)
 				inputElementDesc.Format = DXGI_FORMAT_R32G32B32A32_SINT;
 			else if (signatureParamaterDesc.ComponentType == D3D_REGISTER_COMPONENT_UINT32)
