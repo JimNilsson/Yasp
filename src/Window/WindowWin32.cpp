@@ -258,11 +258,6 @@ LRESULT yasp::WindowWin32::OnEventProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 				break;
 			}
 
-
-			//UINT key = (scanCode << 16) | (isE0 << 24);
-			//char buffer[512] = {};
-			//GetKeyNameText((LONG)key, buffer, 512);
-			//std::cout << virtualKey << "\n";
 			if (hlKey != Keyboard::Key::DUMMY_KEY)
 			{
 				if (wasUp)
@@ -274,11 +269,6 @@ LRESULT yasp::WindowWin32::OnEventProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		}
 		else if (raw->header.dwType == RIM_TYPEMOUSE)
 		{
-			/*std::cout << "Mouse at?: " << raw->data.mouse.lLastX << ", " << raw->data.mouse.lLastY << "\n";
-			std::cout << "What is this?: " << raw->data.mouse.usButtonFlags << "\n";
-			std::cout << "What is this?: " << raw->data.mouse.usButtonData << "\n";
-			uint32_t buttonevent = raw->data.mouse.usButtonFlags;*/
-
 			switch (raw->data.mouse.usButtonFlags)
 			{
 			case RI_MOUSE_LEFT_BUTTON_DOWN:

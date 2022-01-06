@@ -397,13 +397,15 @@ int main(int argc, char** argv)
 			renderContext.Draw(36, 0);
 			
 		});
-		ImGui::Text("Hello Imgui Rendered with Yasp!");
+	/*	ImGui::Text("Hello Imgui Rendered with Yasp!");
 		ImGui::Text("The text is no longer weird since fixing the input layout!");
 		if (ImGui::Button("Gotta get inputs working..."))
 		{
 			em.Destroy(entities.back());
 			entities.pop_back();
-		}
+		}*/
+		bool show = true;
+		ImGui::ShowDemoWindow(&show);
 		pipe->SetVertexBuffer(floorbuffer, sizeof(Vertex), 0);
 		auto floorMVP =  view * projection;
 		auto newmat = ~(floorMVP);
