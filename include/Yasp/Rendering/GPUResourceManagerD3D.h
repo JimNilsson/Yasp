@@ -37,6 +37,7 @@ namespace yasp
 		void UpdateBuffer(const GPUResourceID& id) override final;
 		void StageBuffer(const GPUResourceID& id, void* data, size_t size, size_t offset = 0) override final;
 		size_t GetBufferElementCount(const GPUResourceID& id)  override final;
+		size_t GetBufferSize(const GPUResourceID& id) const override final;
 		const std::string& GetBufferElementName(const GPUResourceID& id, size_t offset) override final;
 		AssignableMemory GetBufferSegment(const GPUResourceID& id, const std::string& identifier) override final;
 		AssignableMemory GetBufferSegment(const GPUResourceID& id, size_t offset) override final;

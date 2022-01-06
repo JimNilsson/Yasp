@@ -18,6 +18,7 @@ namespace yasp
 		GPUBuffer(const GPUBuffer& other);
 		virtual GPUBuffer& operator=(const GPUBuffer& other);
 		AssignableMemory operator[](const std::string& identifier);
+		size_t GetSize() const;
 		void Update();
 		void Stage(void* data, size_t size, size_t offset = 0);
 		void OnEachElement(std::function<void(const std::string&, AssignableMemory)> callback);

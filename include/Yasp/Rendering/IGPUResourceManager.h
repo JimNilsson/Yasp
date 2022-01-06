@@ -23,6 +23,7 @@ namespace yasp
 		virtual Shader CreatePixelShader(const void* shaderSourceCode, size_t shaderSourceSize) = 0;
 		virtual Shader GetShader(const GPUResourceID& id) = 0;
 		virtual size_t GetBufferElementCount(const GPUResourceID& id) = 0;
+		virtual size_t GetBufferSize(const GPUResourceID& id) const = 0;
 		virtual const std::string& GetBufferElementName(const GPUResourceID& id, size_t offset) = 0;
 		virtual AssignableMemory GetBufferSegment(const GPUResourceID& id, size_t offset) = 0;
 

@@ -22,34 +22,41 @@ struct ImguiRenderData {
 	yasp::GPUResourceID blendState;
 };
 
-ImguiRenderData renderData;
+static ImguiRenderData renderData;
+
+void CreateVertexBuffer(size_t vtxCount)
+{
+	yasp::BufferDesc vertexBufferDesc = {
+		static_cast<int32_t>(vtxCount) * sizeof(ImDrawVert),
+		sizeof(ImDrawVert),
+		yasp::BufferBinding::BIND_VERTEX_BUFFER,
+		yasp::Usage::GPU_READ_CPU_WRITE
+	};
+	renderData.vertexBuffer = resourceManager->CreateBuffer(vertexBufferDesc, nullptr);
+}
+
+void CreateIndexBuffer(size_t idxCount)
+{
+	yasp::BufferDesc indexBufferDesc = {
+		static_cast<int32_t>(idxCount) * sizeof(ImDrawIdx),
+		sizeof(ImDrawIdx),
+		yasp::BufferBinding::BIND_INDEX_BUFFER,
+		yasp::Usage::GPU_READ_CPU_WRITE
+	};
+	renderData.indexBuffer = resourceManager->CreateBuffer(indexBufferDesc, nullptr);
+}
 
 IMGUI_IMPL_API bool ImGui_ImplYasp_Init(yasp::Window & window, yasp::RenderContext & renderContext)
 {
-	
 	imguiRenderContext = &renderContext;
 	resourceManager = imguiRenderContext->ResourceManager();
 	//imguiWindow = &window;
 
 	ImGui_ImplWin32_Init(window.GetWindowHandle());
 	
+	CreateVertexBuffer(500);
+	CreateIndexBuffer(500);
 
-	yasp::BufferDesc vertexBufferDesc = {
-		10000,
-		sizeof(ImDrawVert),
-		yasp::BufferBinding::BIND_VERTEX_BUFFER,
-		yasp::Usage::GPU_READ_CPU_WRITE
-	};
-	renderData.vertexBuffer = resourceManager->CreateBuffer(vertexBufferDesc, nullptr);
-
-	yasp::BufferDesc indexBufferDesc = {
-		10000,
-		sizeof(ImDrawIdx),
-		yasp::BufferBinding::BIND_INDEX_BUFFER,
-		yasp::Usage::GPU_READ_CPU_WRITE
-	};
-	renderData.indexBuffer = resourceManager->CreateBuffer(indexBufferDesc, nullptr);
-	
 	static const char* imguiVertexShaderCode =
 		"cbuffer cameraBuffer : register(b0) \
             {\
@@ -206,6 +213,18 @@ IMGUI_IMPL_API void ImGui_ImplYasp_RenderDrawData(ImDrawData * drawData)
 	vp.topLeftY = 0.0f;
 	imguiRenderContext->SetViewport(vp);
 	imguiRenderContext->SetTopology(yasp::Topology::TRIANGLE_LIST);
+
+	size_t vtxBufferSize = renderData.vertexBuffer.GetSize();
+	size_t idxBufferSize = renderData.indexBuffer.GetSize();
+	if (drawData->TotalVtxCount * sizeof(ImDrawVert) > vtxBufferSize)
+	{
+		CreateVertexBuffer(drawData->TotalVtxCount + 500);
+	}
+	if (drawData->TotalIdxCount * sizeof(ImDrawIdx) > idxBufferSize)
+	{
+		CreateIndexBuffer(drawData->TotalIdxCount + 500);
+	}
+
 
 	size_t vtxOffset = 0;
 	size_t idxOffset = 0;

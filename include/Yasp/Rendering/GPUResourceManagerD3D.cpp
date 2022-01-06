@@ -608,6 +608,15 @@ size_t yasp::GPUResourceManagerD3D::GetBufferElementCount(const GPUResourceID & 
 	return 0;
 }
 
+size_t yasp::GPUResourceManagerD3D::GetBufferSize(const GPUResourceID & id) const
+{
+	if (auto f = resourceMap.find(id); f != resourceMap.end())
+	{
+		return f->second.resourceDataSize;
+	}
+	return 0;
+}
+
 const std::string & yasp::GPUResourceManagerD3D::GetBufferElementName(const GPUResourceID & id, size_t offset)
 {
 	if (auto f = resourceMap.find(id); f != resourceMap.end())

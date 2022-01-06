@@ -24,6 +24,11 @@ yasp::AssignableMemory yasp::GPUBuffer::operator[](const std::string & identifie
 	return resourceManager->GetBufferSegment(*this, identifier);
 }
 
+size_t yasp::GPUBuffer::GetSize() const
+{
+	return resourceManager->GetBufferSize(*this);
+}
+
 void yasp::GPUBuffer::Update()
 {
 	resourceManager->UpdateBuffer(*this);
