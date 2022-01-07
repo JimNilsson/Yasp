@@ -420,23 +420,7 @@ int main(int argc, char** argv)
 			break;
 		}
 		bool show = true;
-		//ImGui::ShowDemoWindow(&show);
-	/*	if (ImGui::Button("Exit"))
-		{
-			window.Close();
-			break;
-		}*/
-		ImGui::Begin("My First Tool", nullptr, ImGuiWindowFlags_MenuBar);
-		if (ImGui::BeginMenuBar())
-		{
-			if (ImGui::BeginMenu("File"))
-			{
-				if (ImGui::MenuItem("Open..", "Ctrl+O")) { /* Do stuff */ }
-				ImGui::EndMenu();
-			}
-			ImGui::EndMenuBar();
-		}
-		ImGui::End();
+		ImGui::ShowDemoWindow(&show);
 			
 		pipe->SetVertexBuffer(floorbuffer, sizeof(Vertex), 0);
 		auto floorMVP =  view * projection;
