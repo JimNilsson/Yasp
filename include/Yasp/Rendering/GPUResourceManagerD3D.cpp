@@ -577,11 +577,13 @@ void yasp::GPUResourceManagerD3D::UpdateBuffer(const GPUResourceID & id)
 		deviceContext->Unmap(f->second.buffer, 0);
 	}
 }
-
+#include <Yasp/ImguiYasp/imgui.h>
 void yasp::GPUResourceManagerD3D::StageBuffer(const GPUResourceID & id, void * data, size_t size, size_t offset)
 {
 	if (auto f = resourceMap.find(id); f != resourceMap.end())
 	{
+		auto cunt = (uint8_t*)f->second.resourceData + offset;
+		ImDrawVert* cunts = (ImDrawVert*)cunt;
 		memcpy((uint8_t*)f->second.resourceData + offset, data, size);
 	}
 }

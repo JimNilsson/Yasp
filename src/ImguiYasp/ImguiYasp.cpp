@@ -4,9 +4,12 @@
 #include <Yasp/Rendering/RenderContext.h>
 #include <Yasp/SwizzleVec.h>
 #include <Yasp/ImguiYasp/imgui_impl_win32.h>
+#include <Yasp/Timer.h>
+#include <Yasp/Window/Keyboard.h>
+#include <Yasp/Window/Mouse.h>
 
 static yasp::RenderContext* imguiRenderContext = nullptr;
-//static yasp::Window* imguiWindow = nullptr;
+static yasp::Window* yaspWindow = nullptr;
 static yasp::IGPUResourceManager* resourceManager = nullptr;
 
 
@@ -23,11 +26,60 @@ struct ImguiRenderData {
 };
 
 static ImguiRenderData renderData;
+static yasp::Timer timer;
+
+void InitWindow()
+{
+	ImGuiIO& io = ImGui::GetIO();
+	io.BackendPlatformUserData = nullptr;
+	io.BackendPlatformName = "yasp_window";
+	io.KeyMap[ImGuiKey_Tab] = yasp::Keyboard::Key::TAB;
+	io.KeyMap[ImGuiKey_LeftArrow] = yasp::Keyboard::Key::LEFT;
+	io.KeyMap[ImGuiKey_RightArrow] = yasp::Keyboard::Key::RIGHT;
+	io.KeyMap[ImGuiKey_UpArrow] = yasp::Keyboard::Key::UP;
+	io.KeyMap[ImGuiKey_DownArrow] = yasp::Keyboard::Key::DOWN;
+	io.KeyMap[ImGuiKey_PageUp] = yasp::Keyboard::Key::PGUP;
+	io.KeyMap[ImGuiKey_PageDown] = yasp::Keyboard::Key::PGDOWN;
+	io.KeyMap[ImGuiKey_Home] = yasp::Keyboard::Key::HOME;
+	io.KeyMap[ImGuiKey_End] = yasp::Keyboard::Key::END;
+	io.KeyMap[ImGuiKey_Insert] = yasp::Keyboard::Key::INS;
+	io.KeyMap[ImGuiKey_Delete] = yasp::Keyboard::Key::DEL;
+	io.KeyMap[ImGuiKey_Backspace] = yasp::Keyboard::Key::BACKSPACE;
+	io.KeyMap[ImGuiKey_Space] = yasp::Keyboard::Key::SPACE;
+	io.KeyMap[ImGuiKey_Enter] = yasp::Keyboard::Key::ENTER;
+	io.KeyMap[ImGuiKey_Escape] = yasp::Keyboard::Key::ESCAPE;
+	io.KeyMap[ImGuiKey_KeyPadEnter] = yasp::Keyboard::Key::NUMPAD_ENTER;
+	io.KeyMap[ImGuiKey_A] = yasp::Keyboard::Key::A;
+	io.KeyMap[ImGuiKey_C] = yasp::Keyboard::Key::C;
+	io.KeyMap[ImGuiKey_V] = yasp::Keyboard::Key::V;
+	io.KeyMap[ImGuiKey_X] = yasp::Keyboard::Key::X;
+	io.KeyMap[ImGuiKey_Y] = yasp::Keyboard::Key::Y;
+	io.KeyMap[ImGuiKey_Z] = yasp::Keyboard::Key::Z;
+
+
+	
+}
+
+void WindowFrame()
+{
+	auto dt = timer.Tick();
+	ImGuiIO& io = ImGui::GetIO();
+	io.DisplaySize = ImVec2((float)yaspWindow->GetWidth(), (float)yaspWindow->GetHeight());
+	io.DeltaTime = dt;
+	auto pos = yasp::Mouse::GetPos();
+	io.MousePos = { (float)pos.x, (float)pos.y };
+	io.MouseDown[0] = yasp::Mouse::IsDown(yasp::Mouse::Button::LEFT);
+	io.MouseDown[1] = yasp::Mouse::IsDown(yasp::Mouse::Button::RIGHT);
+	io.MouseDown[2] = yasp::Mouse::IsDown(yasp::Mouse::Button::MIDDLE);
+	io.MouseWheel += yasp::Mouse::GetScroll();
+	io.KeysDown[0x57] = yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::A);
+	
+}
 
 void CreateVertexBuffer(size_t vtxCount)
 {
 	yasp::BufferDesc vertexBufferDesc = {
-		static_cast<int32_t>(vtxCount) * sizeof(ImDrawVert),
+		static_cast<int32_t>(vtxCount * sizeof(ImDrawVert)),
 		sizeof(ImDrawVert),
 		yasp::BufferBinding::BIND_VERTEX_BUFFER,
 		yasp::Usage::GPU_READ_CPU_WRITE
@@ -38,7 +90,7 @@ void CreateVertexBuffer(size_t vtxCount)
 void CreateIndexBuffer(size_t idxCount)
 {
 	yasp::BufferDesc indexBufferDesc = {
-		static_cast<int32_t>(idxCount) * sizeof(ImDrawIdx),
+		static_cast<int32_t>(idxCount * sizeof(ImDrawIdx)),
 		sizeof(ImDrawIdx),
 		yasp::BufferBinding::BIND_INDEX_BUFFER,
 		yasp::Usage::GPU_READ_CPU_WRITE
@@ -46,13 +98,15 @@ void CreateIndexBuffer(size_t idxCount)
 	renderData.indexBuffer = resourceManager->CreateBuffer(indexBufferDesc, nullptr);
 }
 
+
+
 IMGUI_IMPL_API bool ImGui_ImplYasp_Init(yasp::Window & window, yasp::RenderContext & renderContext)
 {
 	imguiRenderContext = &renderContext;
 	resourceManager = imguiRenderContext->ResourceManager();
-	//imguiWindow = &window;
-
-	ImGui_ImplWin32_Init(window.GetWindowHandle());
+	yaspWindow = &window;
+	InitWindow();
+	//ImGui_ImplWin32_Init(window.GetWindowHandle());
 	
 	CreateVertexBuffer(500);
 	CreateIndexBuffer(500);
@@ -177,7 +231,7 @@ IMGUI_IMPL_API bool ImGui_ImplYasp_Init(yasp::Window & window, yasp::RenderConte
 
 IMGUI_IMPL_API void ImGui_ImplYasp_Shutdown()
 {
-	ImGui_ImplWin32_Shutdown();
+	//ImGui_ImplWin32_Shutdown();
 	renderData.vertexBuffer.Release();
 	renderData.indexBuffer.Release();
 	renderData.vertexShader.Release();
@@ -192,7 +246,8 @@ IMGUI_IMPL_API void ImGui_ImplYasp_Shutdown()
 
 IMGUI_IMPL_API void ImGui_ImplYasp_NewFrame()
 {
-	ImGui_ImplWin32_NewFrame();
+	//ImGui_ImplWin32_NewFrame();
+	WindowFrame();
 	return IMGUI_IMPL_API void();
 }
 
@@ -261,8 +316,17 @@ IMGUI_IMPL_API void ImGui_ImplYasp_RenderDrawData(ImDrawData * drawData)
 	resourceManager->SetBlendState(renderData.blendState, blendFactor, 0xffffffff);
 	resourceManager->SetDepthStencilState(renderData.depthStencilState, 0);
 	resourceManager->SetRasterizer(renderData.rasterizer);
+	size_t vtxCount = 0;
+	size_t idxCount = 0;
+	for (int n = 0; n < drawData->CmdListsCount; n++)
+	{
+		auto idxData = drawData->CmdLists[n]->IdxBuffer;
+		auto vtxData = drawData->CmdLists[n]->VtxBuffer;
+		imguiRenderContext->DrawIndexed(idxData.Size, idxCount, vtxCount);
+		vtxCount += vtxData.Size;
+		idxCount += idxData.Size;
+	}
 	
-	imguiRenderContext->DrawIndexed(idxOffset / sizeof(ImDrawIdx), 0, 0);
 	resourceManager->PopState();
 	return IMGUI_IMPL_API void();
 }

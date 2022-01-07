@@ -279,6 +279,7 @@ int main(int argc, char** argv)
 	yasp::float3 forward = { 0,0,1 };
 	yasp::float3 up = { 0,1,0 };
 	yasp::quaternion cameraRotation = { 1.0f, 0.0f, 0.0f, 0.0f };
+	bool lookMode = false;
 	while (window.IsOpen())
 	{
 		window.PollEvents();
@@ -289,56 +290,70 @@ int main(int argc, char** argv)
 		accTime += dt;
 		
 		auto mp = yasp::float2((float)yasp::Mouse::GetPos().x, (float)yasp::Mouse::GetPos().y);
-		if (yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::A))
+		if (lookMode)
 		{
-			auto right = yasp::cross(up, forward);
-			pos -= right * dt * speed;
+			if (yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::A))
+			{
+				auto right = yasp::cross(up, forward);
+				pos -= right * dt * speed;
+			}
+			if (yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::D))
+			{
+				auto right = yasp::cross(up, forward);
+				pos += right * dt * speed;
+			}
+			if (yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::W))
+			{
+				pos += forward * dt * speed;
+			}
+			if (yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::S))
+			{
+				pos -= forward * dt * speed;
+			}
+			if (yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::SPACE))
+			{
+				pos += yasp::float3(0, 1, 0) * dt * speed;
+			}
+			if (yasp::Keyboard::WasKeyReleased(yasp::Keyboard::Key::ESCAPE))
+			{
+				lookMode = false;
+				//window.Close();
+				//break;
+			}
+			if (yasp::Keyboard::WasKeyPressed(yasp::Keyboard::Key::G))
+			{
+				window.SetGrabCursor(true);
+			}
+			auto dm = yasp::Mouse::GetRelativeMovement();
+			if (dm.x)
+			{
+				float rotAngle = -dm.x*dt*rotSpeed;
+				cameraRotation *= yasp::quaternion(std::cosf(rotAngle), 0, std::sinf(rotAngle), 0);
+				auto rot = yasp::mat4::RotationQuaternion(cameraRotation);
+				forward = yasp::normalize((rot * yasp::float4(0.0f, 0.0f, 1.0f, 0.0f)).xyz);
+				up = yasp::normalize((rot * yasp::float4(0.0f, 1.0f, 0.0f, 0.0f)).xyz);
+			}
+			if (dm.y)
+			{
+				auto right = cross(up, forward);
+				float rotAngle = -dm.y*dt*rotSpeed;
+				right *= std::sinf(rotAngle);
+				cameraRotation *= yasp::quaternion(std::cosf(rotAngle), right.x, right.y, right.z);
+				auto rot = yasp::mat4::RotationQuaternion(cameraRotation);
+				forward = yasp::normalize((rot * yasp::float4(0.0f, 0.0f, 1.0f, 0.0f)).xyz);
+				up = yasp::normalize((rot * yasp::float4(0.0f, 1.0f, 0.0f, 0.0f)).xyz);
+			}
 		}
-		if (yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::D))
+		else
 		{
-			auto right = yasp::cross(up, forward);
-			pos += right * dt * speed;
+			if (yasp::Keyboard::WasKeyReleased(yasp::Keyboard::Key::ESCAPE))
+			{
+				lookMode = true;
+				window.Close();
+				break;
+			}
 		}
-		if (yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::W))
-		{
-			pos += forward * dt * speed;
-		}
-		if (yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::S))
-		{
-			pos -= forward * dt * speed;
-		}
-		if (yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::SPACE))
-		{
-			pos += yasp::float3(0, 1, 0) * dt * speed;
-		}
-		if (yasp::Keyboard::WasKeyReleased(yasp::Keyboard::Key::ESCAPE))
-		{
-			window.Close();
-			break;
-		}
-		if (yasp::Keyboard::WasKeyPressed(yasp::Keyboard::Key::G))
-		{
-			window.SetGrabCursor(true);
-		}
-		auto dm = yasp::Mouse::GetRelativeMovement();
-		if (dm.x)
-		{
-			float rotAngle = -dm.x*dt*rotSpeed;
-			cameraRotation *= yasp::quaternion(std::cosf(rotAngle), 0, std::sinf(rotAngle), 0);
-			auto rot = yasp::mat4::RotationQuaternion(cameraRotation);
-			forward = yasp::normalize((rot * yasp::float4(0.0f, 0.0f, 1.0f, 0.0f)).xyz);
-			up = yasp::normalize((rot * yasp::float4(0.0f, 1.0f, 0.0f, 0.0f)).xyz);
-		}
-		if (dm.y)
-		{
-			auto right = cross(up, forward);
-			float rotAngle = -dm.y*dt*rotSpeed;
-			right *= std::sinf(rotAngle);
-			cameraRotation *= yasp::quaternion(std::cosf(rotAngle), right.x, right.y, right.z);
-			auto rot = yasp::mat4::RotationQuaternion(cameraRotation);
-			forward = yasp::normalize((rot * yasp::float4(0.0f,0.0f,1.0f, 0.0f)).xyz);
-			up = yasp::normalize((rot * yasp::float4(0.0f,1.0f,0.0f, 0.0f)).xyz);
-		}
+		
 
 		lang += dt;
 		
@@ -397,15 +412,32 @@ int main(int argc, char** argv)
 			renderContext.Draw(36, 0);
 			
 		});
-	/*	ImGui::Text("Hello Imgui Rendered with Yasp!");
+		ImGui::Text("Hello Imgui Rendered with Yasp!");
 		ImGui::Text("The text is no longer weird since fixing the input layout!");
-		if (ImGui::Button("Gotta get inputs working..."))
+		if (ImGui::Button("Exit Program"))
 		{
-			em.Destroy(entities.back());
-			entities.pop_back();
-		}*/
+			window.Close();
+			break;
+		}
 		bool show = true;
-		ImGui::ShowDemoWindow(&show);
+		//ImGui::ShowDemoWindow(&show);
+	/*	if (ImGui::Button("Exit"))
+		{
+			window.Close();
+			break;
+		}*/
+		ImGui::Begin("My First Tool", nullptr, ImGuiWindowFlags_MenuBar);
+		if (ImGui::BeginMenuBar())
+		{
+			if (ImGui::BeginMenu("File"))
+			{
+				if (ImGui::MenuItem("Open..", "Ctrl+O")) { /* Do stuff */ }
+				ImGui::EndMenu();
+			}
+			ImGui::EndMenuBar();
+		}
+		ImGui::End();
+			
 		pipe->SetVertexBuffer(floorbuffer, sizeof(Vertex), 0);
 		auto floorMVP =  view * projection;
 		auto newmat = ~(floorMVP);

@@ -461,12 +461,12 @@ void yasp::WindowWin32::SetGrabCursor(bool grabbing)
 
 int32_t yasp::WindowWin32::GetWidth() const
 {
-	return height;
+	return width;
 }
 
 int32_t yasp::WindowWin32::GetHeight() const
 {
-	return width;
+	return height;
 }
 
 float yasp::WindowWin32::GetAspectRatio() const
