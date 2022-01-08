@@ -3,7 +3,6 @@
 #include <Yasp/Window/Window.h>
 #include <Yasp/Rendering/RenderContext.h>
 #include <Yasp/SwizzleVec.h>
-#include <Yasp/ImguiYasp/imgui_impl_win32.h>
 #include <Yasp/Timer.h>
 #include <Yasp/Window/Keyboard.h>
 #include <Yasp/Window/Mouse.h>
@@ -113,7 +112,6 @@ IMGUI_IMPL_API bool ImGui_ImplYasp_Init(yasp::Window & window, yasp::RenderConte
 	resourceManager = imguiRenderContext->ResourceManager();
 	yaspWindow = &window;
 	InitWindow();
-	//ImGui_ImplWin32_Init(window.GetWindowHandle());
 	
 	CreateVertexBuffer(500);
 	CreateIndexBuffer(500);
@@ -238,7 +236,6 @@ IMGUI_IMPL_API bool ImGui_ImplYasp_Init(yasp::Window & window, yasp::RenderConte
 
 IMGUI_IMPL_API void ImGui_ImplYasp_Shutdown()
 {
-	//ImGui_ImplWin32_Shutdown();
 	renderData.vertexBuffer.Release();
 	renderData.indexBuffer.Release();
 	renderData.vertexShader.Release();
@@ -253,7 +250,6 @@ IMGUI_IMPL_API void ImGui_ImplYasp_Shutdown()
 
 IMGUI_IMPL_API void ImGui_ImplYasp_NewFrame()
 {
-	//ImGui_ImplWin32_NewFrame();
 	WindowFrame();
 	return IMGUI_IMPL_API void();
 }
