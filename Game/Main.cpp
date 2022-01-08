@@ -414,6 +414,8 @@ int main(int argc, char** argv)
 		});
 		ImGui::Text("Hello Imgui Rendered with Yasp!");
 		ImGui::Text("The text is no longer weird since fixing the input layout!");
+		char buff[16] = {'a','b','c'};
+		ImGui::InputText("Stuff", buff, 16, 0);
 		if (ImGui::Button("Exit Program"))
 		{
 			window.Close();

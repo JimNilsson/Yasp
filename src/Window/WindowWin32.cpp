@@ -105,6 +105,15 @@ LRESULT yasp::WindowWin32::OnEventProc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 		PostQuitMessage(0);
 		source->open = false;
 		break;
+	case WM_CHAR:
+		if (wParam > 0 && wParam < 0x10000)
+		{
+			WCHAR buf[2] = { (WCHAR)wParam };
+			uint8_t utf8Buffer[16] = {};
+			WideCharToMultiByte(CP_UTF8, 0, buf, -1, (LPSTR)utf8Buffer, 16, NULL, NULL);
+			yasp::Keyboard::AddInput(std::string((char*)utf8Buffer));
+		}
+		break;
 	case WM_INPUT:
 	{
 		//https://blog.molecular-matters.com/2011/09/05/properly-handling-keyboard-input/
@@ -407,7 +416,7 @@ yasp::WindowWin32::WindowWin32(uint32_t width, uint32_t height, bool fullscreen)
 	RAWINPUTDEVICE rawInputDevice[2];
 	rawInputDevice[0].usUsagePage = 0x01;
 	rawInputDevice[0].usUsage = 0x06; //Keyboard
-	rawInputDevice[0].dwFlags = RIDEV_NOLEGACY;
+	rawInputDevice[0].dwFlags = 0;
 	rawInputDevice[0].hwndTarget = hwnd;
 
 	rawInputDevice[1].usUsagePage = 0x01;
@@ -477,6 +486,7 @@ float yasp::WindowWin32::GetAspectRatio() const
 void yasp::WindowWin32::PollEvents()
 {
 	Keyboard::Update(std::chrono::high_resolution_clock::now());
+	Keyboard::ClearInput();
 	Mouse::Update(std::chrono::high_resolution_clock::now());
 	MSG msg;
 	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))

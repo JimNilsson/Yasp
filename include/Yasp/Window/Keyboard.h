@@ -2,6 +2,7 @@
 #define YASP_KEYBOARD_H
 
 #include <Yasp/Config.h>
+#include <string>
 #include <chrono>
 namespace yasp
 {
@@ -112,6 +113,9 @@ namespace yasp
 
 		static const char* KeyName(Key key);
 
+		static void AddInput(std::string&& input);
+		static std::string GetInput();
+		static void ClearInput();
 		static void PressKey(Key key);
 		static void ReleaseKey(Key key);
 		static void Update(std::chrono::high_resolution_clock::time_point curtime);
@@ -130,6 +134,7 @@ namespace yasp
 		static KeyStatus keyStatus[KEY_COUNT];
 		static std::chrono::high_resolution_clock::time_point keyReleasedAt[KEY_COUNT];
 		static std::chrono::high_resolution_clock::time_point keyPressedAt[KEY_COUNT];
+		static std::string input;
 	};
 }
 

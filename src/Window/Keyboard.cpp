@@ -6,7 +6,7 @@ std::chrono::high_resolution_clock::time_point yasp::Keyboard::currentTime;
 std::chrono::high_resolution_clock::time_point yasp::Keyboard::keyReleasedAt[yasp::Keyboard::KEY_COUNT];
 std::chrono::high_resolution_clock::time_point yasp::Keyboard::keyPressedAt[yasp::Keyboard::KEY_COUNT];
 
-
+std::string yasp::Keyboard::input = "";
 
 bool yasp::Keyboard::IsKeyDown(Key key)
 {
@@ -129,6 +129,21 @@ const char * yasp::Keyboard::KeyName(Key key)
 	if (auto f = keyNames.find(key); f != keyNames.end())
 		return f->second;
 	return nullptr;
+}
+
+void yasp::Keyboard::AddInput(std::string&& input)
+{
+	yasp::Keyboard::input += std::move(input);
+}
+
+std::string yasp::Keyboard::GetInput()
+{
+	return yasp::Keyboard::input;
+}
+
+void yasp::Keyboard::ClearInput()
+{
+	yasp::Keyboard::input = "";
 }
 
 void yasp::Keyboard::PressKey(Key key)

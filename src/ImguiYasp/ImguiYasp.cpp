@@ -56,24 +56,31 @@ void InitWindow()
 	io.KeyMap[ImGuiKey_Y] = yasp::Keyboard::Key::Y;
 	io.KeyMap[ImGuiKey_Z] = yasp::Keyboard::Key::Z;
 
-
+	
 	
 }
 
 void WindowFrame()
 {
-	auto dt = timer.Tick();
+	const auto dt = timer.Tick();
 	ImGuiIO& io = ImGui::GetIO();
 	io.DisplaySize = ImVec2((float)yaspWindow->GetWidth(), (float)yaspWindow->GetHeight());
 	io.DeltaTime = dt;
-	auto pos = yasp::Mouse::GetPos();
+	const auto pos = yasp::Mouse::GetPos();
 	io.MousePos = { (float)pos.x, (float)pos.y };
 	io.MouseDown[0] = yasp::Mouse::IsDown(yasp::Mouse::Button::LEFT);
 	io.MouseDown[1] = yasp::Mouse::IsDown(yasp::Mouse::Button::RIGHT);
 	io.MouseDown[2] = yasp::Mouse::IsDown(yasp::Mouse::Button::MIDDLE);
 	io.MouseWheel += yasp::Mouse::GetScroll();
-	io.KeysDown[0x57] = yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::A);
-	
+	io.KeyShift = yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::LSHIFT) || yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::RSHIFT);
+	io.KeyAlt = yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::ALT) || yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::ALTGR);
+	io.KeyCtrl = yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::LCTRL) || yasp::Keyboard::IsKeyDown(yasp::Keyboard::Key::RCTRL);
+	for (uint32_t key = yasp::Keyboard::Key::A; key < yasp::Keyboard::Key::KEY_COUNT; ++key)
+	{
+		io.KeysDown[key] = yasp::Keyboard::IsKeyDown(static_cast<yasp::Keyboard::Key>(key));
+	}
+	const auto charInput = yasp::Keyboard::GetInput();
+	io.AddInputCharactersUTF8(charInput.data());
 }
 
 void CreateVertexBuffer(size_t vtxCount)
