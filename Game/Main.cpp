@@ -349,8 +349,8 @@ int main(int argc, char** argv)
 			if (yasp::Keyboard::WasKeyReleased(yasp::Keyboard::Key::ESCAPE))
 			{
 				lookMode = true;
-				window.Close();
-				break;
+				//window.Close();
+				//break;
 			}
 		}
 		
@@ -416,6 +416,13 @@ int main(int argc, char** argv)
 		ImGui::Text("The text is no longer weird since fixing the input layout!");
 		char buff[16] = {'a','b','c'};
 		ImGui::InputText("Stuff", buff, 16, 0);
+		auto pos = em.Read<yasp::Position>(entities[0]);
+		auto vel = em.Read<Velocity>(entities[0]);
+		auto scale = em.Read<yasp::Scale>(entities[0]);
+		ImGui::InputFloat3("Velocity", (float*)&vel.v[0], "%.5f", 0);
+		ImGui::SliderFloat4("Pos", (float*)&pos.v[0], -5.0f, 5.0f, "%.5f", 0);
+		ImGui::SliderFloat3("Scale", (float*)&scale.v[0], 0.1f, 5.0f, "%.5f", 0);
+		em.Update(entities[0], pos, vel, scale);
 		if (ImGui::Button("Exit Program"))
 		{
 			window.Close();
