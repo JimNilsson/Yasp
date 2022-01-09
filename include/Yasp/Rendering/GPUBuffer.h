@@ -3,6 +3,7 @@
 
 #include <Yasp/Rendering/GPUResourceID.h>
 #include <Yasp/Rendering/AssignableMemory.h>
+#include <Yasp/Rendering/GPUBufferVariable.h>
 #include <functional>
 
 
@@ -17,7 +18,7 @@ namespace yasp
 		virtual ~GPUBuffer();
 		GPUBuffer(const GPUBuffer& other);
 		virtual GPUBuffer& operator=(const GPUBuffer& other);
-		AssignableMemory operator[](const std::string& identifier);
+		GPUBufferVariable operator[](const std::string& identifier);
 		size_t GetSize() const;
 		void Update();
 		void Stage(void* data, size_t size, size_t offset = 0);

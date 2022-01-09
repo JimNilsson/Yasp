@@ -6,7 +6,7 @@
 
 namespace yasp
 {
-	class Scale : public IComponent, public yasp::float4
+	class Scale : public yasp::float4
 	{
 	public:
 		using yasp::float4::float4;

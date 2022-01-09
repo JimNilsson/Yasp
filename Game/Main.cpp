@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <Yasp/EntityComponent/Components/IComponent.h>
 #include <Yasp/EntityComponent/Components/Lens.h>
+#include <Yasp/EntityComponent/Components/RadialLightEmitter.h>
 #include <Yasp/ImguiYasp/ImguiYasp.h>
 
 yasp::float3 randvec()
@@ -30,19 +31,18 @@ yasp::float3 randvec()
 	return normalize(yasp::float3(x, y, z));
 }
 
+struct Vertex
+{
+	yasp::float3 pos;
+	yasp::float3 nor;
+	yasp::float2 tex;
+};
 
-struct Velocity : public yasp::IComponent, public yasp::float3
+
+struct Velocity : public yasp::float3
 {
 	using yasp::float3::float3;
-	static constexpr const char* Name() { return "Velocity"; }
 };
-
-struct PointLight : public yasp::float4
-{
-	using yasp::float4::float4;
-};
-
-
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <Yasp/stb_image.h>
@@ -82,32 +82,6 @@ int main(int argc, char** argv)
 	em.Register(camera2, yasp::Lens(), yasp::Position(0.0f, 0.0f, 0.0f, 1.0f), yasp::Rotation(1.0f, 0.0f, 0.0f, 0.0f));
 	cm.SetActiveCamera(cameraEntity);
 
-	yasp::BufferDesc bd;
-	bd.bind = yasp::BIND_SHADER_BUFFER;
-	bd.byteStride = 0;
-	bd.size = 16 * sizeof(float);
-	bd.usage = yasp::Usage::GPU_READ_CPU_WRITE;
-	
-	auto view = yasp::mat4::LookToLH({ 0.0f, 0.0f, -10.0f }, { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f });
-	auto projection = yasp::mat4::PerspectiveLH(yasp::PI<float> / 4, 1280.0f / 720.0f, 0.1f, 50.0f);
-	yasp::mat4 matrix = ~(view * projection);
-
-	PointLight pl = { 0.0f, 2.5f, 0.0f, 10.0f };
-
-	struct PointLights {
-		yasp::vec4<uint32_t> pointlightCount;
-		PointLight pointlights[16];
-	};
-	PointLights pls;
-	pls.pointlightCount.x = 4;
-	for (auto& pl : pls.pointlights)
-	{
-		auto p = randvec() * 25.0f;
-		p.y = 2.5f;
-		pl = PointLight(p.x, p.y, p.z, 2.0f);
-	}
-	
-	
 	auto vshader = pipe->CreateVertexShader("SimpleVS.hlsl");
 	yasp::gpu_components::VertexShader vs = yasp::GPUResourceID(vshader);
 	for (auto& ent : entities)
@@ -125,14 +99,6 @@ int main(int argc, char** argv)
 	vshader.Bind();
 	pshader.Bind();
 	pipe->SetRasterizer(rasterizer);
-
-
-	struct Vertex
-	{
-		yasp::float3 pos;
-		yasp::float3 nor;
-		yasp::float2 tex;
-	};
 
 	
 	Vertex positions[36] = {
@@ -185,7 +151,7 @@ int main(int argc, char** argv)
 		Vertex({ yasp::float3(-0.5f, -0.5f, 0.5f), yasp::float3(-1.0f,0.0f,0.0f), yasp::float2(1.0f, 0.0f) }),
 		Vertex({ yasp::float3(-0.5f, 0.5f,-0.5f), yasp::float3(-1.0f,0.0f,0.0f), yasp::float2(1.0f, 1.0f) })		
 	};
-
+	yasp::BufferDesc bd;
 	bd.bind = yasp::BIND_VERTEX_BUFFER;
 	bd.size = 36 * sizeof(Vertex);
 	bd.usage = yasp::Usage::GPU_READ_WRITE;
@@ -205,14 +171,12 @@ int main(int argc, char** argv)
 	bd.size = 6 * sizeof(Vertex);
 	auto floorbuffer = pipe->CreateBuffer(bd, floor);
 
-	pipe->SetVertexBuffer(vbuffer, sizeof(Vertex), 0);
-
 	renderContext.SetTopology(yasp::Topology::TRIANGLE_LIST);
 	renderContext.SetViewport({
 		0.0f,
 		0.0f,
-		1280.0f,
-		720.0f,
+		(float)window.GetWidth(),
+		(float)window.GetHeight(),
 		0.0f,
 		1.0f
 	});
@@ -239,6 +203,13 @@ int main(int argc, char** argv)
 	td.width = imw;
 	auto floortex = pipe->CreateTexture2D(td, imdata);
 	stbi_image_free(imdata);
+
+	imdata = stbi_load("white.png", &imw, &imh, &imc, 4);
+	td.height = imh;
+	td.width = imw;
+	auto whitetex = pipe->CreateTexture2D(td, imdata);
+	stbi_image_free(imdata);
+
 	yasp::Texture2DViewDesc tvd;
 	tvd.format = yasp::TextureFormat::UNORM8_4;
 	tvd.mipLevels = 1;
@@ -246,6 +217,7 @@ int main(int argc, char** argv)
 
 	auto srv = pipe->CreateTexture2DView(tvd, texture2d);
 	auto srvFloor = pipe->CreateTexture2DView(tvd, floortex);
+	auto srvWhite = pipe->CreateTexture2DView(tvd, whitetex);
 
 	
 
@@ -267,6 +239,15 @@ int main(int argc, char** argv)
 	pshader["albedo"] = srv;
 	pshader["samAnis"] = sampler;
 	
+	
+	for (int i = 0; i < 6; i++)
+	{
+		auto ent = em.Create();
+		yasp::RadialLightEmitter emitter;
+		emitter.position = { (float)i, 0.25f, 0.0f };
+		emitter.color = randvec();
+		em.Register(ent, emitter);
+	}
 
 	float speed = 3.0f;
 	float rotSpeed = 1.0f;
@@ -280,6 +261,7 @@ int main(int argc, char** argv)
 	yasp::float3 up = { 0,1,0 };
 	yasp::quaternion cameraRotation = { 1.0f, 0.0f, 0.0f, 0.0f };
 	bool lookMode = false;
+
 	while (window.IsOpen())
 	{
 		window.PollEvents();
@@ -317,8 +299,6 @@ int main(int argc, char** argv)
 			if (yasp::Keyboard::WasKeyReleased(yasp::Keyboard::Key::ESCAPE))
 			{
 				lookMode = false;
-				//window.Close();
-				//break;
 			}
 			if (yasp::Keyboard::WasKeyPressed(yasp::Keyboard::Key::G))
 			{
@@ -349,30 +329,35 @@ int main(int argc, char** argv)
 			if (yasp::Keyboard::WasKeyReleased(yasp::Keyboard::Key::ESCAPE))
 			{
 				lookMode = true;
-				//window.Close();
-				//break;
 			}
 		}
-		
-
-		lang += dt;
-		
-		pl.x = 6 * cos(lang);
-		pl.z = 6 * sin(lang);
-		pls.pointlights[0] = pl;
-
-		pshader["ObjectBuffer"]["pointlight"] = pl;
-		pshader["ObjectBuffer"].Update();
-		pshader["PointLights"]["ALLOFIT"] = pls;
-		pshader["PointLights"]["pointlights"][1] = PointLight({ 0.0f, 1.0f, 0.0f, 5.0f });
-		pshader["PointLights"].Update();
+	
 		pshader["EyePos"]["eyepos"] = yasp::float4(pos.xyz, 1.0f);
 		pshader["EyePos"].Update();
+
+		ImGui::Begin("Lights");
+		uint32_t plCount = 0;
+		em.ForEach([&](yasp::Entity e, yasp::RadialLightEmitter& emitter) {
+			std::string numStr = std::string(" ") + std::to_string(plCount);
+			ImGui::SliderFloat3((std::string("Position") + numStr).c_str(), &emitter.position.v[0], -10.0f, 10.0f, "%.2f");
+			ImGui::SliderFloat3((std::string("Color") + numStr).c_str(), &emitter.color.v[0], 0.0f, 1.0f, "%.3f");
+			ImGui::SliderFloat((std::string("Falloff exp") + numStr).c_str(), &emitter.falloffExponential, 0.01f, 2.0f, "%.2f");
+			ImGui::SliderFloat((std::string("Falloff lin") + numStr).c_str(), &emitter.falloffLinear, 0.01f, 2.0f, "%.2f");
+			ImGui::SliderFloat3((std::string("Direction") + numStr).c_str(), &emitter.direction.v[0], 0.0f, 1.0f, "%.3f");
+			emitter.direction = yasp::normalize(emitter.direction);
+			ImGui::SliderFloat((std::string("Dir. bias") + numStr).c_str(), &emitter.directionBias, -3.0f, 0.0f, "%.2f");
+			ImGui::Separator();
+			
+			pshader["PointLights"]["pointLights"][plCount] = emitter;
+			++plCount;
+		});
+		pshader["PointLights"]["pointLightCount"] = yasp::vec4<uint32_t>(plCount, 0, 0, 0);
+		pshader["PointLights"].Update();
+		ImGui::End();
+
 		pshader.Bind();
 
 		renderContext.Clear();
-		auto model = yasp::mat4::Identity();
-		view = yasp::mat4::LookToLH(pos, forward, up);
 		pipe->SetVertexBuffer(vbuffer, sizeof(Vertex), 0);
 		pipe->SetShaderTextureViews(yasp::ShaderType::PIXEL, &srv, 0, 1);
 		em.ForEach([&](yasp::Entity e, yasp::Position& p, Velocity& v)
@@ -399,7 +384,6 @@ int main(int argc, char** argv)
 		em.ForEach([&](yasp::Entity e, yasp::gpu_components::VertexShader& vertexShaderId)
 		{
 			auto vertexShader = pipe->GetShader(vertexShaderId);
-
 			vertexShader.OnEachBuffer([&](yasp::GPUBuffer buffer)
 			{
 				buffer.OnEachElement([&](const std::string& identifier, yasp::AssignableMemory bufferSegment)
@@ -408,21 +392,9 @@ int main(int argc, char** argv)
 				});
 				buffer.Update();
 			});
-
 			renderContext.Draw(36, 0);
-			
 		});
-		ImGui::Text("Hello Imgui Rendered with Yasp!");
-		ImGui::Text("The text is no longer weird since fixing the input layout!");
-		char buff[16] = {'a','b','c'};
-		ImGui::InputText("Stuff", buff, 16, 0);
-		auto pos = em.Read<yasp::Position>(entities[0]);
-		auto vel = em.Read<Velocity>(entities[0]);
-		auto scale = em.Read<yasp::Scale>(entities[0]);
-		ImGui::InputFloat3("Velocity", (float*)&vel.v[0], "%.5f", 0);
-		ImGui::SliderFloat4("Pos", (float*)&pos.v[0], -5.0f, 5.0f, "%.5f", 0);
-		ImGui::SliderFloat3("Scale", (float*)&scale.v[0], 0.1f, 5.0f, "%.5f", 0);
-		em.Update(entities[0], pos, vel, scale);
+
 		if (ImGui::Button("Exit Program"))
 		{
 			window.Close();
@@ -432,10 +404,11 @@ int main(int argc, char** argv)
 		ImGui::ShowDemoWindow(&show);
 			
 		pipe->SetVertexBuffer(floorbuffer, sizeof(Vertex), 0);
-		auto floorMVP =  view * projection;
-		auto newmat = ~(floorMVP);
+		
 		auto ident = yasp::mat4::Identity();
-		vshader["EntityBuffer"]["WorldViewProjectionMatrix"] = newmat;
+		auto floorWvp = cm.GetActiveViewProjectionMatrix();
+
+		vshader["EntityBuffer"]["WorldViewProjectionMatrix"] = ~floorWvp;
 		vshader["EntityBuffer"].Update();
 		vshader["WorldBuffer"]["WorldMatrix"] = ident;
 		vshader["WorldBuffer"]["RotationMatrix"] = ident;

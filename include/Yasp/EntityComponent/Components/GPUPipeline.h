@@ -8,7 +8,7 @@
 namespace yasp
 {
 
-	class GPUPipeline : public IComponent
+	class GPUPipeline
 	{
 	public:
 		GPUPipeline() {}

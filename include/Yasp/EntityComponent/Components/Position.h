@@ -6,7 +6,7 @@
 
 namespace yasp
 {
-	class Position : public IComponent, public yasp::float4
+	class Position : public yasp::float4
 	{
 	public:
 		using yasp::float4::float4;

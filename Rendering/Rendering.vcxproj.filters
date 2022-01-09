@@ -39,6 +39,9 @@
     <ClCompile Include="..\src\Rendering\GPUBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\Rendering\GPUBufferVariable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Yasp\Rendering\Enums.h">
@@ -81,6 +84,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\Yasp\Rendering\AssignableResource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\Yasp\Rendering\GPUBufferVariable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

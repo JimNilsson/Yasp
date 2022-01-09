@@ -4,6 +4,7 @@
 #include <Yasp/Rendering/IShader.h>
 #include <Yasp/Rendering/GPUBuffer.h>
 #include <Yasp/Rendering/AssignableMemory.h>
+#include <Yasp/Rendering/GPUBufferVariable.h>
 #include <string>
 
 namespace yasp
@@ -17,7 +18,7 @@ namespace yasp
 		{
 			shader->SetResource(identifier, other);
 		}
-		AssignableMemory operator[](const std::string& var)
+		GPUBufferVariable operator[](const std::string& var)
 		{
 			return shader->GetBuffer(identifier)[var];
 		}

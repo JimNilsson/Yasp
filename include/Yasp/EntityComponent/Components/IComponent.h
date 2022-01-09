@@ -7,7 +7,7 @@ namespace yasp
 	{
 	public:
 		IComponent() {}
-		virtual ~IComponent() = 0 {}
+		~IComponent() {}
 	};
 }
 

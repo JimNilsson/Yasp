@@ -577,13 +577,11 @@ void yasp::GPUResourceManagerD3D::UpdateBuffer(const GPUResourceID & id)
 		deviceContext->Unmap(f->second.buffer, 0);
 	}
 }
-#include <Yasp/ImguiYasp/imgui.h>
+
 void yasp::GPUResourceManagerD3D::StageBuffer(const GPUResourceID & id, void * data, size_t size, size_t offset)
 {
 	if (auto f = resourceMap.find(id); f != resourceMap.end())
 	{
-		auto cunt = (uint8_t*)f->second.resourceData + offset;
-		ImDrawVert* cunts = (ImDrawVert*)cunt;
 		memcpy((uint8_t*)f->second.resourceData + offset, data, size);
 	}
 }
@@ -635,6 +633,56 @@ yasp::AssignableMemory yasp::GPUResourceManagerD3D::GetBufferSegment(const GPURe
 		return AssignableMemory(static_cast<uint8_t*>(f->second.resourceData) + f->second.offsets[offset].offset, f->second.offsets[offset].size);
 	}
 	throw std::exception("GetBufferSegment GPU resource ID not found");
+}
+
+yasp::GPUBufferVariable yasp::GPUResourceManagerD3D::GetBufferVariable(const GPUResourceID & id, const std::string & identifier)
+{
+	if (auto f = resourceMap.find(id); f != resourceMap.end())
+	{
+		auto& resource = f->second;
+		if (auto g = resource.namedOffsets.find(identifier); g != resource.namedOffsets.end())
+		{
+			auto& namedOffset = g->second;
+			return GPUBufferVariable(static_cast<uint8_t*>(resource.resourceData) + namedOffset.offset, namedOffset.size, this, id, identifier);
+		}
+	}
+	return GPUBufferVariable();
+}
+
+yasp::GPUBufferVariable yasp::GPUResourceManagerD3D::GetBufferVariable(const GPUResourceID & id, const std::string & identifier, size_t offset)
+{
+	if (auto f = resourceMap.find(id); f != resourceMap.end())
+	{
+		auto& resource = f->second;
+		if (auto g = resource.namedOffsets.find(identifier); g != resource.namedOffsets.end())
+		{
+			auto& namedOffset = g->second;
+			assert(offset < (size_t)namedOffset.elements);
+			const auto basePtr = static_cast<uint8_t*>(resource.resourceData);
+			const auto arrStartPtr = basePtr + namedOffset.offset;
+			const auto arrIndexPtr = arrStartPtr + (namedOffset.stride * offset);
+			return GPUBufferVariable(arrIndexPtr, namedOffset.stride, this, id, identifier);
+		}
+	}
+	return GPUBufferVariable();
+}
+
+std::tuple<size_t, size_t> yasp::GPUResourceManagerD3D::GetBufferVariableOffsetSize(const GPUResourceID & id, const std::string & identifier, const std::string & varName)
+{
+	if (auto f = resourceMap.find(id); f != resourceMap.end())
+	{
+		const auto& resource = f->second;
+		if (auto g = resource.structVarMapping.find(identifier); g != resource.structVarMapping.end())
+		{
+			const auto& varMapping = g->second;
+			if (auto h = varMapping.find(varName); h != varMapping.end())
+			{
+				const auto structVar = h->second;
+				return std::tuple<size_t, size_t>(structVar.offset, structVar.size);
+			}
+		}
+	}
+	return std::tuple<size_t, size_t>(0, 0);
 }
 
 void yasp::GPUResourceManagerD3D::PushState()
@@ -859,8 +907,6 @@ void yasp::GPUResourceManagerD3D::PixelShaderReflection(ID3DBlob * shaderByteCod
 {
 	ID3D11ShaderReflection* reflection;
 	HRESULT hr = D3DReflect(shaderByteCode->GetBufferPointer(), shaderByteCode->GetBufferSize(), IID_ID3D11ShaderReflection, (void**)&reflection);
-	assert(SUCCEEDED(hr));
-
 	D3D11_SHADER_DESC shaderDesc;
 	reflection->GetDesc(&shaderDesc);
 	RegisterResourceBindings(shaderDesc, reflection, shader);
@@ -959,6 +1005,7 @@ void yasp::GPUResourceManagerD3D::RegisterResourceBindings(const D3D11_SHADER_DE
 	{
 		D3D11_SHADER_INPUT_BIND_DESC sibd;
 		reflection->GetResourceBindingDesc(i, &sibd);
+		
 		if (sibd.Type == D3D_SIT_CBUFFER)
 		{			
 			ID3D11ShaderReflectionConstantBuffer* cb = reflection->GetConstantBufferByName(sibd.Name);
@@ -979,7 +1026,22 @@ void yasp::GPUResourceManagerD3D::RegisterResourceBindings(const D3D11_SHADER_DE
 				ID3D11ShaderReflectionVariable* var = cb->GetVariableByIndex(j);
 				D3D11_SHADER_VARIABLE_DESC svd;
 				var->GetDesc(&svd);
-				RegisterProperty(id, svd.Name, svd.Size, svd.StartOffset);
+				
+				ID3D11ShaderReflectionType* type = var->GetType();
+				D3D11_SHADER_TYPE_DESC typeDesc;
+				type->GetDesc(&typeDesc);
+				RegisterProperty(id, svd.Name, svd.Size, svd.StartOffset, typeDesc.Elements);
+				for (unsigned k = 0; k < typeDesc.Members; ++k)
+				{
+					ID3D11ShaderReflectionType* memberType = type->GetMemberTypeByIndex(k);
+					std::string memberName = type->GetMemberTypeName(k);
+					D3D11_SHADER_TYPE_DESC memberTypeDesc;
+					memberType->GetDesc(&memberTypeDesc);
+					const auto memberSize = memberTypeDesc.Rows * memberTypeDesc.Columns * 4;
+					const auto memberOffset = memberTypeDesc.Offset;
+					RegisterVarMapping(id, svd.Name, memberName, memberSize, memberOffset);
+				}
+				
 			}
 			shader.RegisterBuffer(sibd.Name, id, sibd.BindPoint);
 		}
@@ -1003,6 +1065,34 @@ void yasp::GPUResourceManagerD3D::RegisterProperty(const GPUResourceID & id, con
 			f->second.namedOffsets[name] = { size, offset };
 			f->second.names.push_back(name);
 			f->second.offsets.push_back({ size, offset });
+		}
+	}
+}
+
+void yasp::GPUResourceManagerD3D::RegisterProperty(const GPUResourceID & id, const std::string & name, int32_t size, int32_t offset, int32_t elements)
+{
+	if (auto f = resourceMap.find(id); f != resourceMap.end())
+	{
+		if (auto g = f->second.namedOffsets.find(name); g == f->second.namedOffsets.end())
+		{
+			const auto stride = elements == 0 ? 0 : size / elements;
+			f->second.namedOffsets[name] = { size, offset, elements, stride };
+			f->second.names.push_back(name);
+			f->second.offsets.push_back({ size, offset, elements, stride });
+		}
+	}
+}
+
+void yasp::GPUResourceManagerD3D::RegisterVarMapping(const GPUResourceID & id, const std::string & structVarName, const std::string & varName, int32_t size, int32_t offset)
+{
+	if (auto f = resourceMap.find(id); f != resourceMap.end())
+	{
+		auto& resource = f->second;
+		if (auto g = resource.namedOffsets.find(structVarName); g != resource.namedOffsets.end())
+		{
+			auto& namedOffset = g->second;
+			namedOffset.varName = structVarName;
+			resource.structVarMapping[structVarName][varName] = { size, offset };
 		}
 	}
 }

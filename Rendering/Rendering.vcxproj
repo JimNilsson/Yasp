@@ -144,6 +144,7 @@
   <ItemGroup>
     <ClCompile Include="..\include\Yasp\Rendering\GPUResourceManagerD3D.cpp" />
     <ClCompile Include="..\src\Rendering\GPUBuffer.cpp" />
+    <ClCompile Include="..\src\Rendering\GPUBufferVariable.cpp" />
     <ClCompile Include="..\src\Rendering\RenderContext.cpp" />
     <ClCompile Include="..\src\Rendering\RenderContextD3D.cpp" />
     <ClCompile Include="..\src\Rendering\ShaderD3D.cpp" />
@@ -154,6 +155,7 @@
     <ClInclude Include="..\include\Yasp\Rendering\Descriptions.h" />
     <ClInclude Include="..\include\Yasp\Rendering\Enums.h" />
     <ClInclude Include="..\include\Yasp\Rendering\GPUBuffer.h" />
+    <ClInclude Include="..\include\Yasp\Rendering\GPUBufferVariable.h" />
     <ClInclude Include="..\include\Yasp\Rendering\GPUResourceID.h" />
     <ClInclude Include="..\include\Yasp\Rendering\GPUResourceManagerD3D.h" />
     <ClInclude Include="..\include\Yasp\Rendering\IGPUResourceManager.h" />

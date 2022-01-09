@@ -6,7 +6,7 @@
 
 namespace yasp
 {
-	class Lens : public IComponent
+	class Lens
 	{
 	public:
 		Lens() : fieldOfView(yasp::PI<float> / 4.0f), aspectRatio(16.0f / 9.0f), nearPlane(1.0f), farPlane(100.0f) {}

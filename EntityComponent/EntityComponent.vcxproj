@@ -143,6 +143,7 @@
     <ClInclude Include="..\include\Yasp\EntityComponent\Components\GPUPipeline.h" />
     <ClInclude Include="..\include\Yasp\EntityComponent\Components\IComponent.h" />
     <ClInclude Include="..\include\Yasp\EntityComponent\Components\Lens.h" />
+    <ClInclude Include="..\include\Yasp\EntityComponent\Components\RadialLightEmitter.h" />
     <ClInclude Include="..\include\Yasp\EntityComponent\Components\Position.h" />
     <ClInclude Include="..\include\Yasp\EntityComponent\Components\Rotation.h" />
     <ClInclude Include="..\include\Yasp\EntityComponent\Components\Scale.h" />

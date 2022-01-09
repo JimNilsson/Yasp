@@ -6,7 +6,7 @@
 
 namespace yasp
 {
-	class Rotation : public IComponent, public yasp::quaternion
+	class Rotation : public yasp::quaternion
 	{
 	public:
 		using yasp::quaternion::quaternion;

@@ -41,6 +41,9 @@ namespace yasp
 		const std::string& GetBufferElementName(const GPUResourceID& id, size_t offset) override final;
 		AssignableMemory GetBufferSegment(const GPUResourceID& id, const std::string& identifier) override final;
 		AssignableMemory GetBufferSegment(const GPUResourceID& id, size_t offset) override final;
+		GPUBufferVariable GetBufferVariable(const GPUResourceID& id, const std::string& identifier) override final;
+		GPUBufferVariable GetBufferVariable(const GPUResourceID& id, const std::string& identifier, size_t offset) override final;
+		std::tuple<size_t, size_t> GetBufferVariableOffsetSize(const GPUResourceID& id, const std::string& identifier, const std::string& varName) override final;
 
 		void PushState() override final;
 		void PopState() override final;
@@ -64,15 +67,27 @@ namespace yasp
 		void VertexShaderReflection(ID3DBlob* shaderByteCode, ShaderD3D& shader);
 		void RegisterResourceBindings(const D3D11_SHADER_DESC& desc, ID3D11ShaderReflection* reflection, ShaderD3D& shader);
 		void RegisterProperty(const GPUResourceID& id, const std::string& name, int32_t size, int32_t offset);
-
+		void RegisterProperty(const GPUResourceID& id, const std::string& name, int32_t size, int32_t offset, int32_t elements);
+		void RegisterVarMapping(const GPUResourceID& id, const std::string& bufferName, const std::string& varName, int32_t size, int32_t offset);
 	private:
 		ID3D11Device* device;
 		ID3D11DeviceContext* deviceContext;
-		struct SizeOffset
+
+		struct ShaderStructVariable
 		{
 			int32_t size;
 			int32_t offset;
 		};
+
+		struct SizeOffset
+		{
+			int32_t size;
+			int32_t offset;
+			int32_t elements = 0;
+			int32_t stride = 0;
+			std::string varName;
+		};
+		
 		struct GPUResourceD3D
 		{
 			ResourceType type;
@@ -99,6 +114,7 @@ namespace yasp
 			std::unordered_map<std::string, SizeOffset> namedOffsets;
 			std::vector<std::string> names;
 			std::vector<SizeOffset> offsets;
+			std::unordered_map<std::string, std::unordered_map<std::string, ShaderStructVariable>> structVarMapping;
 		};
 		uint32 resourceCounter;
 		std::unordered_map<GPUResourceID, GPUResourceD3D, GPUResourceID::Hasher> resourceMap;

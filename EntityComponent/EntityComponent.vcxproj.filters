@@ -57,6 +57,9 @@
     <ClInclude Include="..\include\Yasp\EntityComponent\Components\Lens.h">
       <Filter>Header Files\Components</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\Yasp\EntityComponent\Components\RadialLightEmitter.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\EntityComponent\Entity.cpp">

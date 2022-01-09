@@ -84,6 +84,33 @@ namespace yasp
 			return true;
 		}
 
+		mat4 GetActiveViewMatrix()
+		{
+			if (activeIndex >= viewMatrices.size())
+			{
+				return mat4::Identity();
+			}
+			return viewMatrices[activeIndex];
+		}
+
+		mat4 GetActiveProjectionMatrix()
+		{
+			if (activeIndex >= projectionMatrices.size())
+			{
+				return mat4::Identity();
+			}
+			return projectionMatrices[activeIndex];
+		}
+
+		mat4 GetActiveViewProjectionMatrix()
+		{
+			if (activeIndex >= viewProjectionMatrices.size())
+			{
+				return mat4::Identity();
+			}
+			return viewProjectionMatrices[activeIndex];
+		}
+
 		
 	private:
 		std::unordered_map<Entity, size_t, Entity::EntityHasher> entityIndices;

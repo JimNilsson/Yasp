@@ -6,7 +6,9 @@
 #include <Yasp/Rendering/Descriptions.h>
 #include <Yasp/Rendering/GPUBuffer.h>
 #include <Yasp/Rendering/AssignableMemory.h>
+#include <Yasp/Rendering/GPUBufferVariable.h>
 #include <Yasp/Rendering/Shader.h>
+#include <tuple>
 #include <string>
 
 namespace yasp
@@ -41,7 +43,9 @@ namespace yasp
 		virtual void StageBuffer(const GPUResourceID& id, void* data, size_t size, size_t offset = 0) = 0;
 		virtual void UpdateBuffer(const GPUResourceID& id) = 0;
 		virtual AssignableMemory GetBufferSegment(const GPUResourceID& id, const std::string& identifier) = 0;
-
+		virtual GPUBufferVariable GetBufferVariable(const GPUResourceID& id, const std::string& identifier) = 0;
+		virtual GPUBufferVariable GetBufferVariable(const GPUResourceID& id, const std::string& identifier, size_t offset) = 0;
+		virtual std::tuple<size_t, size_t> GetBufferVariableOffsetSize(const GPUResourceID& id, const std::string& identifier, const std::string& varName) = 0;
 		virtual void PushState() = 0;
 		virtual void PopState() = 0;
 

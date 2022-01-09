@@ -54,9 +54,6 @@ void InitWindow()
 	io.KeyMap[ImGuiKey_X] = yasp::Keyboard::Key::X;
 	io.KeyMap[ImGuiKey_Y] = yasp::Keyboard::Key::Y;
 	io.KeyMap[ImGuiKey_Z] = yasp::Keyboard::Key::Z;
-
-	
-	
 }
 
 void WindowFrame()

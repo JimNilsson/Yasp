@@ -19,9 +19,9 @@ yasp::GPUBuffer& yasp::GPUBuffer::operator=(const GPUBuffer & other)
 	return *this;
 }
 
-yasp::AssignableMemory yasp::GPUBuffer::operator[](const std::string & identifier)
+yasp::GPUBufferVariable yasp::GPUBuffer::operator[](const std::string & identifier)
 {
-	return resourceManager->GetBufferSegment(*this, identifier);
+	return resourceManager->GetBufferVariable(*this, identifier);
 }
 
 size_t yasp::GPUBuffer::GetSize() const
